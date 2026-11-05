@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-05T20:23:03-03:00",
+  "updated_at": "2026-11-05T20:47:25-03:00",
   "count": 7,
   "casos": [
     {
@@ -20,11 +20,11 @@
         },
         "galicia": {
           "resultado": "pre_aprobado",
-          "neto": 9468609,
+          "neto": 11313074,
           "plazos": "12"
         },
         "creditcar": {
-          "resultado": "pre_aprobado",
+          "resultado": "pendiente",
           "neto": 12000000,
           "plazos": "12"
         }

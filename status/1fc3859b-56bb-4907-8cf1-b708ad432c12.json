@@ -1,6 +1,6 @@
 {
   "case_id": "1fc3859b-56bb-4907-8cf1-b708ad432c12",
-  "updated_at": "2026-11-05T20:23:02-03:00",
+  "updated_at": "2026-11-05T20:47:11-03:00",
   "status": "listo",
   "channels": {
     "columbia": {
@@ -12,17 +12,17 @@
     },
     "galicia": {
       "state": "pre_aprobado",
-      "neto": 9468609,
+      "neto": 11313074,
       "pdf_url": "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status/pdf/1fc3859b-56bb-4907-8cf1-b708ad432c12_galicia.pdf",
-      "message": null,
-      "updated_at": "2026-11-05T20:21:51-03:00"
+      "message": "Este canal ajusta el monto según lo que puede pagar el cliente. a 18 meses: neto hasta $12.000.000 (cuota aprox $1.211.009).",
+      "updated_at": "2026-11-05T20:47:11-03:00"
     },
     "creditcar": {
-      "state": "pre_aprobado",
+      "state": "sujeto_analisis",
       "neto": 12000000,
       "pdf_url": "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status/pdf/1fc3859b-56bb-4907-8cf1-b708ad432c12_creditcar.pdf",
-      "message": "A REVISAR · Score >180 · sujeto a análisis crediticio",
-      "updated_at": "2026-11-05T20:22:35-03:00"
+      "message": null,
+      "updated_at": "2026-11-05T20:47:11-03:00"
     }
   }
 }
