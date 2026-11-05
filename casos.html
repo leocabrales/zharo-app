@@ -36,8 +36,8 @@
   <script src="js/casos.js"></script>
   <script src="js/ui.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const u = ZharoAuth.requireAuth();
+    document.addEventListener("DOMContentLoaded", async () => {
+      const u = await ZharoAuth.requireAuth();
       if (!u) return;
       zharoPaintChrome("casos");
       const mine = ZharoCasos.mine(u.email);

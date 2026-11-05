@@ -103,7 +103,7 @@ function readForm() {
 }
 
 async function bootCargar() {
-  const user = ZharoAuth.requireAuth();
+  const user = await ZharoAuth.requireAuth();
   if (!user) return;
   zharoPaintChrome("cargar");
   initYears();

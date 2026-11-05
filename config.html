@@ -82,7 +82,7 @@
         ZharoConfig.set("replyChatId", document.getElementById("replyChatId").value.trim());
         ZharoConfig.set("devMode", document.getElementById("devMode").checked ? "1" : "");
         zharoToast("Guardado en este navegador");
-        setTimeout(() => location.reload(), 500);
+        zharoToast("Guardado"); if (typeof zharoPaintChrome === "function") zharoPaintChrome("config");
       };
     });
   </script>

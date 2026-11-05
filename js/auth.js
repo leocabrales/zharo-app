@@ -44,9 +44,11 @@ const ZharoAuth = (() => {
     location.href = "index.html";
   }
 
-  function requireAuth(opts = {}) {
+  async function requireAuth(opts = {}) {
+    await loadAllow();
     const u = currentUser();
-    if (u && isAllowed(u.email)) return u;
+    // Modo prueba: si ya hay sesión de Leo, no rebotear aunque el allowlist aún no cargó.
+    if (u && (isAllowed(u.email) || (u.provider === "dev" && ZharoConfig.isDev()))) return u;
     if (opts.redirect !== false) {
       const next = encodeURIComponent(location.pathname.split("/").pop() + location.search);
       location.href = "index.html?next=" + next;
