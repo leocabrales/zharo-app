@@ -1,14 +1,14 @@
 {
   "case_id": "smoke-test-001",
-  "updated_at": "2026-11-05T16:51:13-03:00",
+  "updated_at": "2026-11-05T16:51:16-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
-      "state": "esperando",
-      "neto": null,
+      "state": "pre_aprobado",
+      "neto": 4500000,
       "pdf_url": null,
       "message": null,
-      "updated_at": null
+      "updated_at": "2026-11-05T16:51:16-03:00"
     },
     "galicia": {
       "state": "esperando",
