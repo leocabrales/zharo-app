@@ -39,6 +39,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(11,61,145,.25);bo
 .msg{color:#d33;font-size:12px;min-height:14px}
 .flt{margin-bottom:6px;padding:8px 11px;font-size:15px}
 .otro{display:none;margin-top:6px}
+.combo{position:relative}
+.combo-in{width:100%;padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23667085' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.combo-in:disabled{opacity:.65;cursor:not-allowed}
+.combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:40;max-height:220px;overflow:auto;margin:0;padding:6px 0;list-style:none;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow)}
+.combo-list li{padding:10px 14px;font-size:15px;cursor:pointer}
+.combo-list li:hover,.combo-list li.active{background:#eef4ff;color:var(--blue)}
+.combo-list li.combo-other{border-top:1px solid var(--border);color:var(--muted);font-weight:600}
+.combo-list li.combo-empty{color:var(--muted);cursor:default;font-size:13px}
+.combo-list li.combo-empty:hover{background:transparent;color:var(--muted)}
 .chk{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:15px}
 .chk input{width:20px;height:20px}
 .banner{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:14px}

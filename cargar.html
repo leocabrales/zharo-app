@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
   <meta name="theme-color" content="#0b3d91">
   <title>ZHARO · Cargar cliente</title>
-  <link rel="stylesheet" href="css/app.css?v=633bdfa">
+  <link rel="stylesheet" href="css/app.css?v=combo1">
 </head>
 <body>
   <div class="wrap">
@@ -32,18 +32,24 @@
       <select id="anio"><option value="">Elegí el año</option></select><div class="msg" id="m_anio"></div>
 
       <label>Marca</label>
-      <input id="f_marca" class="flt" placeholder="🔎 Buscar marca" autocomplete="off">
-      <select id="s_marca" disabled><option value="">Primero elegí el año</option></select>
+      <div class="combo" data-key="marca">
+        <input id="c_marca" class="combo-in" placeholder="Elegí o buscá marca" autocomplete="off" disabled>
+        <ul class="combo-list hidden" id="list_marca" role="listbox"></ul>
+      </div>
       <input id="marca" class="otro" placeholder="Escribí la marca"><div class="msg" id="m_marca"></div>
 
       <label>Modelo</label>
-      <input id="f_modelo" class="flt" placeholder="🔎 Buscar modelo" autocomplete="off">
-      <select id="s_modelo" disabled><option value="">Primero elegí la marca</option></select>
+      <div class="combo" data-key="modelo">
+        <input id="c_modelo" class="combo-in" placeholder="Elegí o buscá modelo" autocomplete="off" disabled>
+        <ul class="combo-list hidden" id="list_modelo" role="listbox"></ul>
+      </div>
       <input id="modelo" class="otro" placeholder="Escribí el modelo"><div class="msg" id="m_modelo"></div>
 
       <label>Versión</label>
-      <input id="f_version" class="flt" placeholder="🔎 Buscar versión (ej: highline, 1.6)" autocomplete="off">
-      <select id="s_version" disabled><option value="">Primero elegí el modelo</option></select>
+      <div class="combo" data-key="version">
+        <input id="c_version" class="combo-in" placeholder="Elegí o buscá versión" autocomplete="off" disabled>
+        <ul class="combo-list hidden" id="list_version" role="listbox"></ul>
+      </div>
       <input id="version" class="otro" placeholder="Escribí la versión"><div class="msg" id="m_version"></div>
 
       <label>Neto a solicitar <i>(opcional)</i></label>
@@ -75,10 +81,10 @@
     <a href="config.html" data-nav="config">Config</a>
   </div></div>
 
-  <script src="js/config.js?v=633bdfa"></script>
-  <script src="js/auth.js?v=633bdfa"></script>
-  <script src="js/casos.js?v=633bdfa"></script>
-  <script src="js/ui.js?v=633bdfa"></script>
-  <script src="js/cargar.js?v=633bdfa"></script>
+  <script src="js/config.js?v=combo1"></script>
+  <script src="js/auth.js?v=combo1"></script>
+  <script src="js/casos.js?v=combo1"></script>
+  <script src="js/ui.js?v=combo1"></script>
+  <script src="js/cargar.js?v=combo1"></script>
 </body>
 </html>
