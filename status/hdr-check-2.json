@@ -1,0 +1,28 @@
+{
+  "case_id": "hdr-check-2",
+  "updated_at": "2026-11-05T17:06:21-03:00",
+  "status": "cotizando",
+  "channels": {
+    "columbia": {
+      "state": "esperando",
+      "neto": null,
+      "pdf_url": null,
+      "message": null,
+      "updated_at": null
+    },
+    "galicia": {
+      "state": "esperando",
+      "neto": null,
+      "pdf_url": null,
+      "message": null,
+      "updated_at": null
+    },
+    "creditcar": {
+      "state": "esperando",
+      "neto": null,
+      "pdf_url": null,
+      "message": null,
+      "updated_at": null
+    }
+  }
+}
