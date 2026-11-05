@@ -1,7 +1,7 @@
 {
   "case_id": "0c29a78c-938c-4c06-82d0-296868938cb4",
-  "updated_at": "2026-11-05T17:34:35-03:00",
-  "status": "cotizando",
+  "updated_at": "2026-11-05T17:34:38-03:00",
+  "status": "listo",
   "channels": {
     "columbia": {
       "state": "pre_aprobado",
