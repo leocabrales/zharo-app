@@ -19,6 +19,8 @@ const ZharoConfig = (() => {
       else localStorage.setItem(KEYS[k] || k, String(v));
     } catch {}
   }
+  const DEFAULT_STATUS_BASE = "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status";
+  function statusBase() { return (get("statusBaseUrl") || "").trim() || DEFAULT_STATUS_BASE; }
   function isDev() {
     const q = new URLSearchParams(location.search);
     if (q.get("dev") === "1") { set("devMode", "1"); return true; }
@@ -32,8 +34,9 @@ const ZharoConfig = (() => {
       googleClientId: get("googleClientId"),
       replyChatId: get("replyChatId"),
       statusBaseUrl: get("statusBaseUrl"),
+      statusBaseDefault: DEFAULT_STATUS_BASE,
       devMode: isDev(),
     };
   }
-  return { KEYS, get, set, isDev, all };
+  return { KEYS, get: (k, d) => (k === "statusBaseUrl" ? statusBase() : get(k, d)), set, isDev, all, DEFAULT_STATUS_BASE };
 })();

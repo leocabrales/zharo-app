@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
   <meta name="theme-color" content="#0b3d91">
   <title>ZHARO · Configuración</title>
-  <link rel="stylesheet" href="css/app.css?v=sim1">
+  <link rel="stylesheet" href="css/app.css?v=sim2">
 </head>
 <body>
   <div class="wrap">
@@ -34,8 +34,8 @@
       <label>Webhook key (Bearer)</label>
       <input id="webhookKey" type="password" placeholder="••••••••" autocomplete="off">
       <label>URL base de estado (JSON por caso) <i>opcional</i></label>
-      <input id="statusBaseUrl" placeholder="https://…/web_status" autocomplete="off">
-      <div class="muted" style="margin-top:4px">La pantalla de cotización pide <code>&lt;base&gt;/&lt;case_id&gt;.json</code> cada 2–3s. Sin esto, corre demo local en vivo.</div>
+      <input id="statusBaseUrl" placeholder="https://raw.githubusercontent.com/leocabrales/zharo-app/main/status" autocomplete="off">
+      <div class="muted" style="margin-top:4px">La pantalla de cotización pide <code>&lt;base&gt;/&lt;case_id&gt;.json</code> cada 2–3s. Vacío = default <code>https://raw.githubusercontent.com/leocabrales/zharo-app/main/status</code>.</div>
 
       <label>Telegram chat_id <i>(legacy, no usar para web)</i></label>
       <input id="replyChatId" inputmode="numeric" placeholder="dejar vacío">
@@ -62,9 +62,9 @@
     <a href="config.html" data-nav="config" class="active">Config</a>
   </div></div>
 
-  <script src="js/config.js?v=sim1"></script>
-  <script src="js/auth.js?v=sim1"></script>
-  <script src="js/ui.js?v=sim1"></script>
+  <script src="js/config.js?v=sim2"></script>
+  <script src="js/auth.js?v=sim2"></script>
+  <script src="js/ui.js?v=sim2"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       // config accesible sin login para poder pegar el Client ID la primera vez
