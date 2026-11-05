@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
   <meta name="theme-color" content="#0b3d91">
   <title>ZHARO · Configuración</title>
-  <link rel="stylesheet" href="css/app.css?v=sim3">
+  <link rel="stylesheet" href="css/app.css?v=sim4">
 </head>
 <body>
   <div class="wrap">
@@ -35,7 +35,7 @@
       <input id="webhookKey" type="password" placeholder="••••••••" autocomplete="off">
       <label>GitHub token (recomendado para cotizar desde la web)</label>
       <input id="githubToken" type="password" placeholder="github_pat_… o ghp_…" autocomplete="off">
-      <p class="muted" style="margin-top:8px">El webhook de Cursor no acepta llamadas desde GitHub Pages (CORS). Con un token fine-grained (solo Actions write en <code>leocabrales/zharo-app</code>) el envío dispara la cotización real por script.</p>
+      <p class="muted" style="margin-top:8px">El webhook de Cursor no acepta llamadas desde GitHub Pages (CORS). Token fine-grained en <code>leocabrales/zharo-app</code> con <b>Contents: Read and write</b> (y Actions write si querés). Eso dispara la cotización real por script.</p>
       <label>URL base de estado (JSON por caso) <i>opcional</i></label>
       <input id="statusBaseUrl" placeholder="https://raw.githubusercontent.com/leocabrales/zharo-app/main/status" autocomplete="off">
       <div class="muted" style="margin-top:4px">La pantalla de cotización pide <code>&lt;base&gt;/&lt;case_id&gt;.json</code> cada 2–3s. Vacío = default <code>https://raw.githubusercontent.com/leocabrales/zharo-app/main/status</code>.</div>
@@ -65,9 +65,9 @@
     <a href="config.html" data-nav="config" class="active">Config</a>
   </div></div>
 
-  <script src="js/config.js?v=sim3"></script>
-  <script src="js/auth.js?v=sim3"></script>
-  <script src="js/ui.js?v=sim3"></script>
+  <script src="js/config.js?v=sim4"></script>
+  <script src="js/auth.js?v=sim4"></script>
+  <script src="js/ui.js?v=sim4"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       // config accesible sin login para poder pegar el Client ID la primera vez
