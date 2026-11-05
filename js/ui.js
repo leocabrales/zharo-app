@@ -15,17 +15,25 @@ function zharoToast(msg) {
 function zharoPaintChrome(active) {
   const u = ZharoAuth.currentUser();
   const bar = document.getElementById("userbar");
+  const dark = document.body.classList.contains("login-body");
   if (bar && u) {
-    bar.innerHTML = `${u.picture ? `<img src="${u.picture}" alt="">` : ""}<span>${u.name || u.email}</span>
-      <button class="btn ghost" type="button" id="btnLogout" style="padding:6px 10px;font-size:12px">Salir</button>`;
+    if (dark) {
+      bar.innerHTML = `<div class="who">${u.picture ? `<img src="${u.picture}" alt="">` : ""}<div><span>${u.name || u.email}</span><small>${u.email || ""}</small></div></div>
+        <button type="button" id="btnLogout">Salir</button>`;
+    } else {
+      bar.innerHTML = `${u.picture ? `<img src="${u.picture}" alt="">` : ""}<span>${u.name || u.email}</span>
+        <button class="btn ghost" type="button" id="btnLogout" style="padding:6px 10px;font-size:12px">Salir</button>`;
+    }
     const b = document.getElementById("btnLogout");
     if (b) b.onclick = () => ZharoAuth.logout();
   }
   if (ZharoConfig.isDev()) {
     const host = document.getElementById("devBanner");
     if (host) {
-      host.className = "banner dev";
-      host.innerHTML = "⚠️ MODO PRUEBA — sin Google real. Solo para Leo. Sacalo desde Configuración.";
+      host.className = dark ? "login-dev" : "banner dev";
+      host.innerHTML = dark
+        ? "MODO PRUEBA — sin Google real. Solo para Leo. Sacalo desde Configuración."
+        : "⚠️ MODO PRUEBA — sin Google real. Solo para Leo. Sacalo desde Configuración.";
       host.classList.remove("hidden");
     }
   }
