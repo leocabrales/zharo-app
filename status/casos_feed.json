@@ -1,7 +1,35 @@
 {
-  "updated_at": "2026-11-05T17:55:47-03:00",
-  "count": 6,
+  "updated_at": "2026-11-05T20:23:03-03:00",
+  "count": 7,
   "casos": [
+    {
+      "id": "csv_7f0fbd8d60d1e821",
+      "fecha_hora": "2026-11-05 20:23",
+      "comercial": "Leo (modo prueba)",
+      "agencia": "PRADO LIMA",
+      "vehiculo": "CHEVROLET TRACKER TRACKER 1.2 TURBO AT6 L/22 2023",
+      "neto_pedido": 12000000,
+      "plazos": "12",
+      "dni_tail": "338",
+      "source": "csv",
+      "channels": {
+        "columbia": {
+          "resultado": "pre_aprobado",
+          "neto": 10236600,
+          "plazos": "12"
+        },
+        "galicia": {
+          "resultado": "pre_aprobado",
+          "neto": 9468609,
+          "plazos": "12"
+        },
+        "creditcar": {
+          "resultado": "pre_aprobado",
+          "neto": 12000000,
+          "plazos": "12"
+        }
+      }
+    },
     {
       "id": "0c29a78c-938c-4c06-82d0-296868938cb4",
       "fecha_hora": "2026-11-05 17:34:41",
