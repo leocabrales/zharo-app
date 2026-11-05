@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#050b1a">
+  <title>ZHARO · Cotizando</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css?v=sim1">
+  <link rel="stylesheet" href="css/simulando.css?v=sim1">
+</head>
+<body class="sim-body">
+  <div class="sim-bg" aria-hidden="true">
+    <div class="sim-grid"></div>
+    <div class="sim-orb sim-orb-a"></div>
+    <div class="sim-orb sim-orb-b"></div>
+  </div>
+
+  <div class="sim-wrap">
+    <header class="sim-top">
+      <div class="sim-brand">
+        <div class="sim-mark">ZH</div>
+        <div>
+          <div class="sim-logo">ZHARO</div>
+          <div class="sim-live" id="liveBadge"><span class="sim-pulse-dot"></span><span id="liveLabel">COTIZANDO EN VIVO</span></div>
+        </div>
+      </div>
+      <a class="sim-back" href="casos.html">Mis casos</a>
+    </header>
+
+    <section class="sim-client glass" id="clientCard">
+      <div class="sim-client-kicker">Caso</div>
+      <h1 id="clientName">—</h1>
+      <div class="sim-meta" id="clientMeta"></div>
+      <div class="sim-progress">
+        <div class="sim-progress-bar" id="progressBar"></div>
+      </div>
+      <div class="sim-progress-label" id="progressLabel">Consultando canales…</div>
+    </section>
+
+    <section class="sim-channels" id="channels" aria-live="polite"></section>
+
+    <section class="sim-footer-cta hidden" id="doneBox">
+      <div class="glass sim-done">
+        <div class="sim-done-title">Listo</div>
+        <p class="sim-done-sub">Ofertas actualizadas. Podés volver a Mis casos o cargar otro cliente.</p>
+        <div class="sim-done-actions">
+          <a class="sim-btn primary" href="casos.html">Ver mis casos</a>
+          <a class="sim-btn" href="cargar.html">Cargar otro</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/config.js?v=sim1"></script>
+  <script src="js/auth.js?v=sim1"></script>
+  <script src="js/casos.js?v=sim1"></script>
+  <script src="js/ui.js?v=sim1"></script>
+  <script src="js/simulando.js?v=sim1"></script>
+</body>
+</html>

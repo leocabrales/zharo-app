@@ -5,6 +5,7 @@ const ZharoConfig = (() => {
     webhookKey: "zharo_webhook_key",
     googleClientId: "zharo_google_client_id",
     replyChatId: "zharo_reply_chat_id",
+    statusBaseUrl: "zharo_status_base_url",
     devMode: "zharo_dev",
     user: "zharo_user",
   };
@@ -30,6 +31,7 @@ const ZharoConfig = (() => {
       webhookKey: get("webhookKey"),
       googleClientId: get("googleClientId"),
       replyChatId: get("replyChatId"),
+      statusBaseUrl: get("statusBaseUrl"),
       devMode: isDev(),
     };
   }

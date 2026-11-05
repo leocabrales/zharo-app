@@ -51,10 +51,14 @@ function zharoBuildText(d) {
 async function zharoSubmitCase(data, user) {
   const cfg = ZharoConfig.all();
   const text = zharoBuildText(data);
+  const caseId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : ("c_" + Date.now().toString(36));
+  const auto = [data.marca, data.modelo, data.version, data.anio].filter(Boolean).join(" ");
+
   const payload = {
     source: "zharo-web",
     bot: "AgenteZharoWeb",
-    chat_id: cfg.replyChatId ? Number(cfg.replyChatId) || cfg.replyChatId : 1664242933,
+    reply_mode: "web",
+    case_id: caseId,
     from_name: user?.name || "",
     username: user?.email || "",
     email: user?.email || "",
@@ -62,17 +66,24 @@ async function zharoSubmitCase(data, user) {
     date: Math.floor(Date.now() / 1000),
     form: data,
   };
+  // Solo incluir chat_id si el comercial lo configuró explícitamente (legacy).
+  // En modo web NO se responde por Telegram.
+  if (cfg.replyChatId) {
+    payload.chat_id = Number(cfg.replyChatId) || cfg.replyChatId;
+  }
 
   const saved = ZharoCasos.add({
+    id: caseId,
     email: user?.email,
     agencia: data.agencia,
     dni: data.dni,
     nombre: data.nombre,
-    auto: [data.marca, data.modelo, data.version, data.anio].filter(Boolean).join(" "),
+    auto,
     neto: data.neto,
     plazo: data.plazo,
-    status: "enviado",
+    status: "cotizando",
     payload,
+    channels: ZharoCasos.emptyChannels(),
   });
 
   let remote = { ok: false, skipped: true, reason: "sin_webhook" };
@@ -91,5 +102,5 @@ async function zharoSubmitCase(data, user) {
       remote = { ok: false, skipped: false, error: String(e && e.message || e) };
     }
   }
-  return { saved, payload, remote, text };
+  return { saved, payload, remote, text, caseId };
 }

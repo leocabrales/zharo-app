@@ -318,25 +318,11 @@ async function bootCargar() {
         return;
       }
       const res = await zharoSubmitCase(data, user);
-      out.classList.remove("hidden");
-      let msg = "";
-      if (res.remote.skipped) {
-        msg = `<div class="banner">Guardado en Mis casos. Falta configurar el webhook en Configuración para mandarlo al bot.</div>`;
-      } else if (res.remote.ok) {
-        msg = `<div class="banner ok">Enviado al bot (HTTP ${res.remote.status}). El resultado te llega por Telegram si configuraste el chat_id, o lo ves después en Mis casos.</div>`;
-      } else {
-        msg = `<div class="banner">No llegó al webhook (${res.remote.status || res.remote.error || "error"}). El caso quedó guardado local y podés copiar el payload.</div>`;
-      }
-      out.innerHTML = msg + `<pre class="payload">${res.text.replace(/</g, "&lt;")}</pre>
-        <div class="actions">
-          <button class="btn" type="button" id="copyAgain">Copiar payload</button>
-          <a class="btn primary" href="casos.html">Ver mis casos</a>
-        </div>`;
-      $("copyAgain").onclick = async () => {
-        await navigator.clipboard.writeText(res.text);
-        zharoToast("Copiado");
-      };
-      zharoToast(res.remote.ok ? "Enviado" : "Guardado");
+      // Ir directo a la pantalla de cotización en vivo (resultados en la web, no Telegram).
+      const demo = (!res.remote.ok) ? "&demo=1" : "";
+      zharoToast(res.remote.ok ? "Cotizando…" : "Demo en vivo");
+      location.href = "simulando.html?id=" + encodeURIComponent(res.caseId || res.saved.id) + demo;
+      return;
     } finally {
       btn.disabled = false;
     }
