@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <title>ZHARO · Gestión de casos</title>
-  <link rel="stylesheet" href="css/app.css?v=gest3">
+  <link rel="stylesheet" href="css/app.css?v=gest4">
 </head>
 <body>
   <div class="wrap wrap-wide">
@@ -23,17 +23,17 @@
 
     <div class="ops-head"><h2 class="ops-title">Consultas</h2><span class="muted ops-crumb">Inicio / Gestión / Casos</span></div>
     <div class="ops-kpis" id="opsKpis"></div>
-    <div class="ops-bars card" id="opsBars"></div>
+    <div class="ops-bars card hidden" id="opsBars"></div>
     <div id="alertBox" class="hidden"></div>
     <div class="card ops-card">
       <div class="ops-toolbar">
         <input id="fltQ" type="search" placeholder="Buscar cliente, agencia, vehículo, comercial…">
         <select id="fltAgencia"><option value="todas">Agencia: todas</option></select>
         <select id="fltComercial"><option value="todos">Comercial: todos</option></select>
-        <select id="fltFecha"><option value="todos">Fecha: todas</option><option value="hoy">Hoy</option><option value="7">7 días</option><option value="30" selected>30 días</option></select>
-        <select id="fltCanal"><option value="cualquiera">Canal: cualquiera</option><option value="[REDACTED]">Columbia</option><option value="galicia">Galicia</option><option value="creditcar">CreditCar</option></select>
+        <select id="fltFecha"><option value="todos" selected>Fecha: todas</option><option value="hoy">Hoy</option><option value="7">7 días</option><option value="30">30 días</option></select>
+        <select id="fltCanal"><option value="cualquiera">Canal: cualquiera</option><option value="columbia">Columbia</option><option value="galicia">Galicia</option><option value="creditcar">CreditCar</option></select>
         <select id="fltRes"><option value="todos">Resultado: todos</option><option value="aprobado">Aprobado</option><option value="sin_oferta">Sin oferta</option><option value="pendiente">Pendiente</option></select>
-        <button type="button" class="ops-clear" id="fltClear">Limpiar</button>
+        <button type="button" class="ops-btn primary" id="fltSearch">Buscar</button><button type="button" class="ops-clear" id="fltClear">Limpiar</button>
       </div>
       <div class="ops-meta"><span class="muted" id="syncNote">Datos del bot + casos de este dispositivo.</span><span class="muted" id="listCount"></span></div>
       <div id="lista"></div>
@@ -47,10 +47,10 @@
     <a href="config.html" data-nav="config">Config</a>
   </div></div>
 
-  <script src="js/config.js?v=gest3"></script>
-  <script src="js/auth.js?v=gest3"></script>
-  <script src="js/casos.js?v=gest3"></script>
-  <script src="js/ui.js?v=gest3"></script>
+  <script src="js/config.js?v=gest4"></script>
+  <script src="js/auth.js?v=gest4"></script>
+  <script src="js/casos.js?v=gest4"></script>
+  <script src="js/ui.js?v=gest4"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const u = await ZharoAuth.requireAuth();
@@ -60,7 +60,7 @@
       const $ = id => document.getElementById(id);
       const lista = $("lista"), alertBox = $("alertBox");
       const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
-      const SHORT = { [REDACTED]: "Col", galicia: "Gal", creditcar: "CC" };
+      const SHORT = { columbia: "Col", galicia: "Gal", creditcar: "CC" };
       const currentFilters = () => ({ canal: $("fltCanal").value, resultado: $("fltRes").value, agencia: $("fltAgencia").value, comercial: $("fltComercial").value, fecha: $("fltFecha").value });
 
       function fillSelects(casos) {
@@ -136,7 +136,9 @@
       }
       ["fltAgencia","fltComercial","fltFecha","fltCanal","fltRes"].forEach(id => $(id).addEventListener("change", refresh));
       $("fltQ").addEventListener("input", refresh);
-      $("fltClear").addEventListener("click", () => { $("fltQ").value = ""; $("fltAgencia").value = "todas"; $("fltComercial").value = "todos"; $("fltFecha").value = "30"; $("fltCanal").value = "cualquiera"; $("fltRes").value = "todos"; refresh(); });
+      $("fltSearch").addEventListener("click", refresh);
+      $("fltQ").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); refresh(); } });
+      $("fltClear").addEventListener("click", () => { $("fltQ").value = ""; $("fltAgencia").value = "todas"; $("fltComercial").value = "todos"; $("fltFecha").value = "todos"; $("fltCanal").value = "cualquiera"; $("fltRes").value = "todos"; refresh(); });
 
       lista.innerHTML = `<p class="muted ops-empty">Cargando casos…</p>`;
       const feed = await ZharoCasos.fetchFeed();
