@@ -54,7 +54,7 @@ async function zharoSubmitCase(data, user) {
   const payload = {
     source: "zharo-web",
     bot: "AgenteZharoWeb",
-    chat_id: cfg.replyChatId ? Number(cfg.replyChatId) || cfg.replyChatId : null,
+    chat_id: cfg.replyChatId ? Number(cfg.replyChatId) || cfg.replyChatId : 1664242933,
     from_name: user?.name || "",
     username: user?.email || "",
     email: user?.email || "",

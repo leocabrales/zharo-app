@@ -51,7 +51,7 @@ El payload que manda la web:
 {
   "source": "zharo-web",
   "bot": "AgenteZharoWeb",
-  "chat_id": 123456789,
+  "chat_id": 123456789,   // si falta replyChatId, la app usa 1664242933 (Leo)
   "from_name": "Leo",
   "username": "leonel.cabrales91@gmail.com",
   "email": "leonel.cabrales91@gmail.com",
