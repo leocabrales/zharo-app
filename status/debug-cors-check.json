@@ -1,6 +1,6 @@
 {
   "case_id": "debug-cors-check",
-  "updated_at": "2026-11-05T17:05:25-03:00",
+  "updated_at": "2026-11-05T17:05:28-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
@@ -11,11 +11,11 @@
       "updated_at": "2026-11-05T17:05:25-03:00"
     },
     "galicia": {
-      "state": "esperando",
+      "state": "sin_oferta",
       "neto": null,
       "pdf_url": null,
-      "message": null,
-      "updated_at": null
+      "message": "Ping de prueba (debug), no se cotizó",
+      "updated_at": "2026-11-05T17:05:28-03:00"
     },
     "creditcar": {
       "state": "esperando",
