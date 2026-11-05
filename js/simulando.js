@@ -255,23 +255,34 @@
 
     let caso = id ? ZharoCasos.get(id) : null;
     if (!caso) {
-      // Demo sin caso previo
-      caso = ZharoCasos.add({
-        email: user.email,
-        agencia: "Demo Agencia",
-        dni: "30111222",
-        nombre: "Cliente Demo",
-        auto: "VW Gol Trend 2020",
-        neto: "máximo",
-        plazo: "48",
-        status: "cotizando",
-        channels: null,
-        demo: true,
-      });
-      history.replaceState(null, "", "simulando.html?id=" + encodeURIComponent(caso.id) + "&demo=1");
+      if (forceDemo) {
+        caso = ZharoCasos.add({
+          email: user.email,
+          agencia: "Demo Agencia",
+          dni: "30111222",
+          nombre: "Cliente Demo",
+          auto: "VW Gol Trend 2020",
+          neto: "máximo",
+          plazo: "48",
+          status: "cotizando",
+          channels: null,
+          demo: true,
+        });
+        history.replaceState(null, "", "simulando.html?id=" + encodeURIComponent(caso.id) + "&demo=1");
+      } else {
+        $("clientName").textContent = "Caso no encontrado";
+        $("clientMeta").innerHTML = `<span class="sim-chip">Volvé a Mis casos e ingresá de nuevo</span>`;
+        $("channels").innerHTML = `<p class="muted" style="padding:16px;color:#fff">No hay un caso con este id en este dispositivo. Si cotizaste acá, no borres el almacenamiento del sitio.</p>`;
+        return;
+      }
     }
 
     caso = ensureChannels(caso);
+    // Si alguna vez quedó marcado demo pero ya hay status real, no volver a demo
+    if (caso.demo && !forceDemo) {
+      ZharoCasos.update(caso.id, { demo: false });
+      caso.demo = false;
+    }
     if (caso.status === "enviado") {
       ZharoCasos.update(caso.id, { status: "cotizando" });
       caso.status = "cotizando";
@@ -282,19 +293,23 @@
     listenLocal(caso.id);
 
     const hasStatusBase = !!statusUrlFor(caso.id);
-    const useDemo = forceDemo || caso.demo || (!hasStatusBase && settledCount(caso) < CHANNELS.length);
+    // Demo SOLO con ?demo=1 explícito. Nunca al reabrir una cotización real.
+    const useDemo = forceDemo && settledCount(caso) < CHANNELS.length;
 
-    if (useDemo && settledCount(caso) < CHANNELS.length) {
+    if (useDemo) {
       startDemo(caso);
+      return;
     }
 
-    if (hasStatusBase && settledCount(caso) < CHANNELS.length) {
+    if (hasStatusBase) {
       const tick = async () => {
         const c = ensureChannels(ZharoCasos.get(caso.id) || caso);
         await pollOnce(c);
-        if (settledCount(c) < CHANNELS.length) setTimeout(tick, 2500);
+        const fresh = ensureChannels(ZharoCasos.get(caso.id) || c);
+        if (settledCount(fresh) < CHANNELS.length && fresh.status !== "listo") setTimeout(tick, 2500);
       };
-      setTimeout(tick, 1200);
+      // Siempre pedimos el status al abrir (también si ya está listo) para no mostrar demo viejo
+      setTimeout(tick, 200);
     }
   }
 
