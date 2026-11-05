@@ -1,6 +1,6 @@
 {
   "case_id": "smoke-test-001",
-  "updated_at": "2026-11-05T16:51:19-03:00",
+  "updated_at": "2026-11-05T16:51:22-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
@@ -18,11 +18,11 @@
       "updated_at": "2026-11-05T16:51:19-03:00"
     },
     "creditcar": {
-      "state": "esperando",
-      "neto": null,
+      "state": "pre_aprobado",
+      "neto": 4000000,
       "pdf_url": null,
       "message": null,
-      "updated_at": null
+      "updated_at": "2026-11-05T16:51:22-03:00"
     }
   }
 }
