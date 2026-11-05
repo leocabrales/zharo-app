@@ -1,7 +1,9 @@
-/* Casos locales (localStorage) + estado de canales para la web. */
+/* Casos locales (localStorage) + feed público del bot + panel de gestión. */
 const ZharoCasos = (() => {
   const KEY = "zharo_casos_v1";
   const CHANNEL_IDS = ["columbia", "galicia", "creditcar"];
+  const CHANNEL_LABEL = { columbia: "Columbia", galicia: "Galicia", creditcar: "CreditCar" };
+  const REPEAT_THRESHOLD = 3;
 
   function uuid() {
     if (crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -65,5 +67,312 @@ const ZharoCasos = (() => {
     const e = String(email || "").toLowerCase();
     return list().filter((c) => !e || String(c.email || "").toLowerCase() === e);
   }
-  return { list, add, get, update, mine, emptyChannels, CHANNEL_IDS };
+
+  function feedUrl() {
+    const base = (typeof ZharoConfig !== "undefined" && ZharoConfig.get)
+      ? ZharoConfig.get("statusBaseUrl")
+      : "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status";
+    return String(base).replace(/\/$/, "") + "/casos_feed.json";
+  }
+
+  async function fetchFeed() {
+    const url = feedUrl() + (feedUrl().includes("?") ? "&" : "?") + "t=" + Date.now();
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const data = await r.json();
+      return Array.isArray(data.casos) ? data : { casos: [], updated_at: null, count: 0 };
+    } catch (e) {
+      console.warn("casos_feed", e);
+      return { casos: [], updated_at: null, count: 0, error: String(e.message || e) };
+    }
+  }
+
+  function normResultado(raw) {
+    const r = String(raw || "").toLowerCase().trim();
+    if (!r) return "pendiente";
+    if (r === "pre_aprobado" || r === "aprobado" || r === "listo" || r === "ok") return "pre_aprobado";
+    if (r === "sin_oferta" || r === "no" || r === "rechazado") return "sin_oferta";
+    if (r === "esperando" || r === "pendiente" || r === "cotizando" || r === "enviado" || r === "wait") return "pendiente";
+    if (r === "error") return "sin_oferta";
+    return "pendiente";
+  }
+
+  function channelResultFromLocal(ch) {
+    if (!ch || typeof ch !== "object") return { resultado: "pendiente", neto: null, plazos: null };
+    const state = ch.state || ch.resultado || "esperando";
+    return {
+      resultado: normResultado(state),
+      neto: ch.neto ?? null,
+      plazos: ch.plazos ?? null,
+    };
+  }
+
+  function fromLocal(c) {
+    const channels = {};
+    for (const id of CHANNEL_IDS) {
+      channels[id] = channelResultFromLocal((c.channels || {})[id]);
+    }
+    const when = c.createdAt || c.fecha_hora || c.updatedAt || null;
+    return {
+      id: c.id,
+      fecha_hora: when,
+      comercial: c.comercial || (c.email ? String(c.email).split("@")[0] : "Web"),
+      agencia: c.agencia || "",
+      vehiculo: c.auto || c.vehiculo || "",
+      neto_pedido: c.neto ?? c.neto_pedido ?? null,
+      plazos: c.plazo != null ? String(c.plazo) : (c.plazos || null),
+      dni_tail: c.dni ? String(c.dni).replace(/\D/g, "").slice(-3) : null,
+      source: "web",
+      origin: "local",
+      nombre: c.nombre || null,
+      dni: c.dni || null,
+      status: c.status || null,
+      href: "simulando.html?id=" + encodeURIComponent(c.id),
+      channels,
+      _raw: c,
+    };
+  }
+
+  function fromFeed(c) {
+    const channels = {};
+    for (const id of CHANNEL_IDS) {
+      const ch = (c.channels || {})[id] || {};
+      channels[id] = {
+        resultado: ch.resultado ? normResultado(ch.resultado) : null,
+        neto: ch.neto ?? null,
+        plazos: ch.plazos ?? null,
+      };
+    }
+    const isWeb = c.source === "web" || /^[0-9a-f-]{36}$/i.test(c.id || "");
+    return {
+      id: c.id,
+      fecha_hora: c.fecha_hora,
+      comercial: c.comercial || "—",
+      agencia: c.agencia || "",
+      vehiculo: c.vehiculo || "",
+      neto_pedido: c.neto_pedido ?? null,
+      plazos: c.plazos || null,
+      dni_tail: c.dni_tail || null,
+      source: c.source || "csv",
+      origin: "feed",
+      nombre: null,
+      dni: null,
+      status: null,
+      href: isWeb ? ("simulando.html?id=" + encodeURIComponent(c.id)) : null,
+      channels,
+      _raw: c,
+    };
+  }
+
+  function mergeCases(localArr, feedArr) {
+    const map = new Map();
+    for (const f of feedArr) {
+      const row = fromFeed(f);
+      map.set(row.id, row);
+    }
+    for (const loc of localArr) {
+      const row = fromLocal(loc);
+      const prev = map.get(row.id);
+      if (!prev) {
+        map.set(row.id, row);
+        continue;
+      }
+      // Prefer local richness (nombre/dni/href) but keep feed channel fill if local empty
+      const channels = { ...prev.channels };
+      for (const id of CHANNEL_IDS) {
+        const L = row.channels[id];
+        const F = prev.channels[id];
+        if (!F || F.resultado == null) channels[id] = L;
+        else if (!L || L.resultado == null || L.resultado === "pendiente") channels[id] = F;
+        else channels[id] = L;
+      }
+      map.set(row.id, {
+        ...prev,
+        ...row,
+        channels,
+        nombre: row.nombre || prev.nombre,
+        dni: row.dni || null,
+        href: row.href || prev.href,
+        origin: "local+feed",
+      });
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      const ta = Date.parse(a.fecha_hora) || 0;
+      const tb = Date.parse(b.fecha_hora) || 0;
+      return tb - ta;
+    });
+  }
+
+  function overallStatus(caso) {
+    const vals = CHANNEL_IDS.map((id) => (caso.channels[id] || {}).resultado).filter(Boolean);
+    if (!vals.length) return "pendiente";
+    if (vals.some((v) => v === "pendiente")) return "pendiente";
+    if (vals.some((v) => v === "pre_aprobado")) return "pre_aprobado";
+    return "sin_oferta";
+  }
+
+  function parseFecha(s) {
+    if (!s) return null;
+    const t = Date.parse(s);
+    if (!Number.isNaN(t)) return new Date(t);
+    // "2026-10-27 14:03" Buenos Aires local → treat as local
+    const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
+    if (m) {
+      return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+    }
+    return null;
+  }
+
+  function inDateRange(caso, range) {
+    if (!range || range === "todos") return true;
+    const d = parseFecha(caso.fecha_hora);
+    if (!d) return range === "todos";
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    if (range === "hoy") return d >= start;
+    if (range === "7") {
+      const x = new Date(start); x.setDate(x.getDate() - 7); return d >= x;
+    }
+    if (range === "30") {
+      const x = new Date(start); x.setDate(x.getDate() - 30); return d >= x;
+    }
+    return true;
+  }
+
+  function applyFilters(casos, f) {
+    return casos.filter((c) => {
+      if (!inDateRange(c, f.fecha)) return false;
+      if (f.agencia && f.agencia !== "todas" && c.agencia !== f.agencia) return false;
+      if (f.comercial && f.comercial !== "todos") {
+        if (String(c.comercial || "") !== f.comercial) return false;
+      }
+      const canal = f.canal && f.canal !== "cualquiera" ? f.canal : null;
+      const res = f.resultado && f.resultado !== "todos" ? f.resultado : null;
+      if (canal) {
+        const ch = c.channels[canal] || {};
+        const r = ch.resultado;
+        if (r == null) return false;
+        if (res) {
+          if (res === "aprobado") return r === "pre_aprobado";
+          if (res === "sin_oferta") return r === "sin_oferta";
+          if (res === "pendiente") return r === "pendiente";
+        }
+        return true;
+      }
+      if (res) {
+        const ov = overallStatus(c);
+        if (res === "aprobado") return ov === "pre_aprobado";
+        if (res === "sin_oferta") return ov === "sin_oferta";
+        if (res === "pendiente") return ov === "pendiente";
+      }
+      return true;
+    });
+  }
+
+  function computeStats(casos) {
+    const total = casos.length;
+    const perCanal = {};
+    for (const id of CHANNEL_IDS) {
+      let ok = 0, n = 0;
+      for (const c of casos) {
+        const r = (c.channels[id] || {}).resultado;
+        if (!r || r === "pendiente") continue;
+        n++;
+        if (r === "pre_aprobado") ok++;
+      }
+      perCanal[id] = { ok, n, pct: n ? Math.round((ok / n) * 100) : null };
+    }
+    let overallOk = 0;
+    for (const c of casos) {
+      if (overallStatus(c) === "pre_aprobado") overallOk++;
+    }
+    const agCount = {};
+    for (const c of casos) {
+      const a = c.agencia || "—";
+      agCount[a] = (agCount[a] || 0) + 1;
+    }
+    const topAgencias = Object.entries(agCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([nombre, n]) => ({ nombre, n }));
+
+    return {
+      total,
+      aprobPct: total ? Math.round((overallOk / total) * 100) : 0,
+      aprobCount: overallOk,
+      perCanal,
+      topAgencias,
+    };
+  }
+
+  function repeatAlerts(casos, threshold = REPEAT_THRESHOLD) {
+    const keyCount = {};
+    for (const c of casos) {
+      const k = `${c.comercial || "—"}||${c.agencia || "—"}`;
+      if (!keyCount[k]) keyCount[k] = { comercial: c.comercial || "—", agencia: c.agencia || "—", n: 0 };
+      keyCount[k].n++;
+    }
+    return Object.values(keyCount)
+      .filter((x) => x.n >= threshold)
+      .sort((a, b) => b.n - a.n);
+  }
+
+  function uniqueValues(casos, field) {
+    const s = new Set();
+    for (const c of casos) {
+      const v = (c[field] || "").trim();
+      if (v) s.add(v);
+    }
+    return Array.from(s).sort((a, b) => a.localeCompare(b, "es"));
+  }
+
+  function fmtMoney(n) {
+    if (n == null || n === "") return "—";
+    if (typeof n === "string" && /m[aá]ximo/i.test(n)) return "máximo";
+    const num = Number(n);
+    if (Number.isNaN(num)) return String(n);
+    return num.toLocaleString("es-AR", { maximumFractionDigits: 0 });
+  }
+
+  function fmtWhen(s) {
+    const d = parseFecha(s);
+    if (!d) return s || "—";
+    return d.toLocaleString("es-AR", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  function clientLabel(c) {
+    if (c.nombre) {
+      const dni = c.dni ? ` · DNI ${c.dni}` : (c.dni_tail ? ` · …${c.dni_tail}` : "");
+      return `${c.nombre}${dni}`;
+    }
+    if (c.dni_tail) return `Cliente …${c.dni_tail}`;
+    return c.source === "web" ? "Caso web" : "Consulta bot";
+  }
+
+  function pillClass(resultado) {
+    const r = normResultado(resultado);
+    if (r === "pre_aprobado") return "ok";
+    if (r === "sin_oferta") return "no";
+    return "wait";
+  }
+
+  function pillLabel(resultado) {
+    const r = normResultado(resultado);
+    if (r === "pre_aprobado") return "OK";
+    if (r === "sin_oferta") return "NO";
+    return "…";
+  }
+
+  return {
+    list, add, get, update, mine, emptyChannels, CHANNEL_IDS, CHANNEL_LABEL,
+    REPEAT_THRESHOLD, fetchFeed, mergeCases, applyFilters, computeStats,
+    repeatAlerts, uniqueValues, overallStatus, fmtMoney, fmtWhen, clientLabel,
+    pillClass, pillLabel, normResultado, feedUrl,
+  };
 })();

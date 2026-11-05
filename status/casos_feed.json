@@ -1,0 +1,174 @@
+{
+  "updated_at": "2026-11-05T17:55:47-03:00",
+  "count": 6,
+  "casos": [
+    {
+      "id": "0c29a78c-938c-4c06-82d0-296868938cb4",
+      "fecha_hora": "2026-11-05 17:34:41",
+      "comercial": "Leo (modo prueba)",
+      "agencia": "CONFORTI MOTORS",
+      "vehiculo": "VOLKSWAGEN POLO POLO 1.6 L/16 COM. 4 P 2019",
+      "neto_pedido": 7500000,
+      "plazos": "24",
+      "dni_tail": "394",
+      "source": "web",
+      "channels": {
+        "columbia": {
+          "resultado": "pre_aprobado",
+          "neto": 3365200,
+          "plazos": "24"
+        },
+        "galicia": {
+          "resultado": "sin_oferta",
+          "neto": null,
+          "plazos": "24"
+        },
+        "creditcar": {
+          "resultado": "pre_aprobado",
+          "neto": 8860500,
+          "plazos": "24"
+        }
+      }
+    },
+    {
+      "id": "csv_ea4c10275189a1f7",
+      "fecha_hora": "2026-11-03 11:13",
+      "comercial": "Leo",
+      "agencia": "CARIBE MOTORS",
+      "vehiculo": "CHEVROLET CRUZE 1.4 5 PTAS LT 2020",
+      "neto_pedido": "máximo",
+      "plazos": "12",
+      "dni_tail": "229",
+      "source": "csv",
+      "channels": {
+        "columbia": {
+          "resultado": "pre_aprobado",
+          "neto": 10495100,
+          "plazos": "12"
+        },
+        "galicia": {
+          "resultado": "pre_aprobado",
+          "neto": 6741808,
+          "plazos": "12"
+        },
+        "creditcar": {
+          "resultado": "pre_aprobado",
+          "neto": 10048500,
+          "plazos": "12"
+        }
+      }
+    },
+    {
+      "id": "csv_525ff143bd43a0e2",
+      "fecha_hora": "2026-11-03 10:59",
+      "comercial": "Leo",
+      "agencia": "MEROUS",
+      "vehiculo": "VOLKSWAGEN GOL TREND 1.6 5 P L/17 HIGHLINE 2019",
+      "neto_pedido": 7500000,
+      "plazos": "24",
+      "dni_tail": "681",
+      "source": "csv",
+      "channels": {
+        "columbia": {
+          "resultado": "pre_aprobado",
+          "neto": 8401250,
+          "plazos": "24"
+        },
+        "galicia": {
+          "resultado": "pre_aprobado",
+          "neto": 7068750,
+          "plazos": "24"
+        },
+        "creditcar": {
+          "resultado": "pre_aprobado",
+          "neto": 8043750,
+          "plazos": "24"
+        }
+      }
+    },
+    {
+      "id": "csv_9ef33eb3096c08e3",
+      "fecha_hora": "2026-10-27 15:46",
+      "comercial": "Leo",
+      "agencia": "SUR GARAGE",
+      "vehiculo": "VOLKSWAGEN VOYAGE VOYAGE 1.6 L/15 TRENDLINE 2016",
+      "neto_pedido": 6825000,
+      "plazos": "24",
+      "dni_tail": "098",
+      "source": "csv",
+      "channels": {
+        "columbia": {
+          "resultado": "pendiente",
+          "neto": null,
+          "plazos": "24"
+        },
+        "galicia": {
+          "resultado": "sin_oferta",
+          "neto": null,
+          "plazos": "24"
+        },
+        "creditcar": {
+          "resultado": "sin_oferta",
+          "neto": 5405400,
+          "plazos": "24"
+        }
+      }
+    },
+    {
+      "id": "csv_0d5c4d638a622778",
+      "fecha_hora": "2026-10-27 14:31",
+      "comercial": "Leo",
+      "agencia": "NFR MOTORS",
+      "vehiculo": "RENAULT SANDERO STEPWAY PH2 1.6 INTENS L19 AT 2021",
+      "neto_pedido": 11100000,
+      "plazos": "12-48",
+      "dni_tail": "729",
+      "source": "csv",
+      "channels": {
+        "columbia": {
+          "resultado": "pre_aprobado",
+          "neto": 5865600,
+          "plazos": "12/24/36/48/60"
+        },
+        "galicia": {
+          "resultado": "pre_aprobado",
+          "neto": 12667200,
+          "plazos": "12/18/24/36/48/60"
+        },
+        "creditcar": {
+          "resultado": "pre_aprobado",
+          "neto": 12474000,
+          "plazos": "12-48"
+        }
+      }
+    },
+    {
+      "id": "csv_b84db0fdf8a8e541",
+      "fecha_hora": "2026-10-27 14:03",
+      "comercial": "Leo",
+      "agencia": "ER AUTOMOTORES",
+      "vehiculo": "HYUNDAI TUCSON 2.0 4X2 GL AUT L/10 2013",
+      "neto_pedido": 4500000,
+      "plazos": null,
+      "dni_tail": "566",
+      "source": "csv",
+      "channels": {
+        "columbia": {
+          "resultado": "sin_oferta",
+          "neto": null,
+          "plazos": null
+        },
+        "galicia": {
+          "resultado": "sin_oferta",
+          "neto": null,
+          "plazos": null
+        },
+        "creditcar": {
+          "resultado": "sin_oferta",
+          "neto": null,
+          "plazos": null
+        }
+      }
+    }
+  ]
+}
