@@ -1,14 +1,14 @@
 {
   "case_id": "hdr-check-2",
-  "updated_at": "2026-11-05T17:06:21-03:00",
+  "updated_at": "2026-11-05T17:07:19-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
-      "state": "esperando",
+      "state": "sin_oferta",
       "neto": null,
       "pdf_url": null,
-      "message": null,
-      "updated_at": null
+      "message": "El DNI no corresponde a la persona declarada. Revisalo por favor.",
+      "updated_at": "2026-11-05T17:07:19-03:00"
     },
     "galicia": {
       "state": "esperando",
