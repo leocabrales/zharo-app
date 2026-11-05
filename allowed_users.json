@@ -1,0 +1,7 @@
+{
+  "emails": [
+    "leonel.cabrales91@gmail.com"
+  ],
+  "domains": [],
+  "_nota": "Más adelante se puede agregar el dominio @zharo (ej. zharo.com.ar) en domains para autorizar a todo el equipo. Por ahora solo allowlist de emails."
+}

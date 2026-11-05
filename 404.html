@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="theme-color" content="#0b3d91">
+  <title>ZHARO · Aprobado directo</title>
+  <link rel="stylesheet" href="css/app.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <div class="wrap">
+    <div id="devBanner" class="hidden"></div>
+    <div class="hero">
+      <div class="logo">ZH</div>
+      <div class="brand" style="align-items:center">
+        <h1><b>ZHARO</b></h1>
+        <div class="tag">APROBADO DIRECTO</div>
+      </div>
+      <p class="muted" style="margin-top:12px">Plataforma para comerciales. Cargá el cliente, elegí el auto y cotizá sin Telegram.</p>
+    </div>
+
+    <div class="card" id="loginCard">
+      <h2>Entrar</h2>
+      <p class="muted">Solo mails autorizados (allowlist). Después se puede abrir el dominio @zharo.</p>
+      <div id="g_btn_wrap"></div>
+      <div class="actions">
+        <button class="btn block" type="button" id="btnDev">Entrar en modo prueba (Leo)</button>
+        <a class="btn block ghost" href="config.html">Configuración</a>
+      </div>
+    </div>
+
+    <div class="card hidden" id="homeCard">
+      <div class="userbar" id="userbar" style="margin-bottom:12px"></div>
+      <h2>Hola</h2>
+      <p class="muted">Elegí qué querés hacer.</p>
+      <div class="actions">
+        <a class="btn primary block" href="cargar.html">📝 Cargar cliente</a>
+        <a class="btn block" href="casos.html">📋 Mis casos</a>
+        <a class="btn block ghost" href="config.html">⚙️ Configuración</a>
+      </div>
+    </div>
+
+    <p class="muted" style="text-align:center;margin-top:18px">Borrador gratis · GitHub Pages · sin costo de hosting</p>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    async function boot() {
+      await ZharoAuth.loadAllow();
+      if (ZharoConfig.isDev()) {
+        document.getElementById("devBanner").className = "banner dev";
+        document.getElementById("devBanner").textContent = "⚠️ MODO PRUEBA activo — banner grande a propósito. Solo para testing de Leo.";
+        document.getElementById("devBanner").classList.remove("hidden");
+      }
+      const u = ZharoAuth.currentUser();
+      if (u && ZharoAuth.isAllowed(u.email)) {
+        document.getElementById("loginCard").classList.add("hidden");
+        document.getElementById("homeCard").classList.remove("hidden");
+        zharoPaintChrome("home");
+        const q = new URLSearchParams(location.search);
+        if (q.get("next")) location.href = q.get("next");
+        return;
+      }
+      // esperar GIS
+      function tryBtn() {
+        if (window.google && google.accounts) ZharoAuth.initGoogleButton("g_btn_wrap");
+        else setTimeout(tryBtn, 200);
+      }
+      tryBtn();
+      document.getElementById("btnDev").onclick = () => {
+        ZharoConfig.set("devMode", "1");
+        ZharoAuth.enterDev();
+        location.href = "cargar.html";
+      };
+    }
+    document.addEventListener("DOMContentLoaded", boot);
+  </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="theme-color" content="#0b3d91">
+  <title>ZHARO · Configuración</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="wrap">
+    <div id="devBanner" class="hidden"></div>
+    <div class="top">
+      <div class="brand">
+        <h1><b>ZHARO</b></h1>
+        <div class="tag">Configuración</div>
+      </div>
+      <div class="userbar" id="userbar"></div>
+    </div>
+
+    <div class="card">
+      <h2>Login Google</h2>
+      <p class="muted">Creá un OAuth Client ID (tipo Web) gratis en Google Cloud y pegalo acá. Orígenes autorizados: la URL de esta web.</p>
+      <label>Google Client ID</label>
+      <input id="googleClientId" placeholder="123456789-xxxx.apps.googleusercontent.com" autocomplete="off">
+      <p class="muted" style="margin-top:8px">Allowlist actual: <code>allowed_users.json</code> (leonel.cabrales91@gmail.com). Dominio @zharo más adelante.</p>
+    </div>
+
+    <div class="card">
+      <h2>Webhook del bot</h2>
+      <p class="muted">Misma URL/clave que usa el poller de Telegram (<code>ZHARO_WEBHOOK_URL</code> + <code>ZHARO_WEBHOOK_KEY</code>). Se guardan solo en este navegador (localStorage), no en el repo.</p>
+      <label>Webhook URL</label>
+      <input id="webhookUrl" placeholder="https://…/webhook/…" autocomplete="off">
+      <label>Webhook key (Bearer)</label>
+      <input id="webhookKey" type="password" placeholder="••••••••" autocomplete="off">
+      <label>Telegram chat_id para respuestas <i>(opcional)</i></label>
+      <input id="replyChatId" inputmode="numeric" placeholder="Tu chat_id de Telegram">
+      <p class="muted" style="margin-top:8px">Sin chat_id, el caso igual se manda al bot; las respuestas por ahora siguen yendo por Telegram cuando haya id.</p>
+    </div>
+
+    <div class="card">
+      <h2>Modo prueba</h2>
+      <p class="muted">Bypasea Google y entra como Leo. Solo para testing. Muestra un banner naranja en todas las pantallas.</p>
+      <div class="chk"><input type="checkbox" id="devMode"><span>Activar modo prueba</span></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary block" id="save" type="button">Guardar</button>
+      <a class="btn block" href="index.html">Volver</a>
+    </div>
+    <p class="muted" style="margin-top:12px">Guía paso a paso: <a href="SETUP.md">SETUP.md</a></p>
+  </div>
+
+  <div class="footer"><div class="inner">
+    <a href="index.html" data-nav="home">Inicio</a>
+    <a href="cargar.html" data-nav="cargar">Cargar</a>
+    <a href="casos.html" data-nav="casos">Casos</a>
+    <a href="config.html" data-nav="config" class="active">Config</a>
+  </div></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // config accesible sin login para poder pegar el Client ID la primera vez
+      const u = ZharoAuth.currentUser();
+      if (u) zharoPaintChrome("config");
+      else if (ZharoConfig.isDev()) zharoPaintChrome("config");
+
+      const cfg = ZharoConfig.all();
+      document.getElementById("googleClientId").value = cfg.googleClientId || "";
+      document.getElementById("webhookUrl").value = cfg.webhookUrl || "";
+      document.getElementById("webhookKey").value = cfg.webhookKey || "";
+      document.getElementById("replyChatId").value = cfg.replyChatId || "";
+      document.getElementById("devMode").checked = !!cfg.devMode;
+
+      document.getElementById("save").onclick = () => {
+        ZharoConfig.set("googleClientId", document.getElementById("googleClientId").value.trim());
+        ZharoConfig.set("webhookUrl", document.getElementById("webhookUrl").value.trim());
+        ZharoConfig.set("webhookKey", document.getElementById("webhookKey").value.trim());
+        ZharoConfig.set("replyChatId", document.getElementById("replyChatId").value.trim());
+        ZharoConfig.set("devMode", document.getElementById("devMode").checked ? "1" : "");
+        zharoToast("Guardado en este navegador");
+        setTimeout(() => location.reload(), 500);
+      };
+    });
+  </script>
+</body>
+</html>

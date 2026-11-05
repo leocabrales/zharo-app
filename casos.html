@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="theme-color" content="#0b3d91">
+  <title>ZHARO · Mis casos</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="wrap">
+    <div id="devBanner" class="hidden"></div>
+    <div class="top">
+      <div class="brand">
+        <h1><b>ZHARO</b></h1>
+        <div class="tag">Mis casos</div>
+      </div>
+      <div class="userbar" id="userbar"></div>
+    </div>
+
+    <div class="card">
+      <p class="muted">Por ahora la lista vive en este celular/navegador (localStorage). Después se puede sincronizar con el bot.</p>
+      <div id="lista"></div>
+    </div>
+  </div>
+
+  <div class="footer"><div class="inner">
+    <a href="index.html" data-nav="home">Inicio</a>
+    <a href="cargar.html" data-nav="cargar">Cargar</a>
+    <a href="casos.html" data-nav="casos" class="active">Casos</a>
+    <a href="config.html" data-nav="config">Config</a>
+  </div></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/casos.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const u = ZharoAuth.requireAuth();
+      if (!u) return;
+      zharoPaintChrome("casos");
+      const mine = ZharoCasos.mine(u.email);
+      const box = document.getElementById("lista");
+      if (!mine.length) {
+        box.innerHTML = `<p class="muted">Todavía no cargaste casos desde la web.</p>
+          <a class="btn primary block" href="cargar.html">Cargar el primero</a>`;
+        return;
+      }
+      box.innerHTML = mine.map(c => {
+        const when = new Date(c.createdAt).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" });
+        const pill = c.status === "enviado" ? "wait" : (c.status === "aprobado" ? "ok" : "no");
+        const label = c.status === "enviado" ? "ENVIADO" : String(c.status || "").toUpperCase();
+        return `<div class="case">
+          <div>
+            <div class="t">${c.nombre || "Sin nombre"} · DNI ${c.dni || "-"}</div>
+            <div class="s">${c.agencia || ""} · ${c.auto || ""} · neto ${c.neto ?? "-"} · ${c.plazo || "-"}m</div>
+            <div class="s">${when} (Buenos Aires)</div>
+          </div>
+          <span class="pill ${pill}">${label}</span>
+        </div>`;
+      }).join("");
+    });
+  </script>
+</body>
+</html>

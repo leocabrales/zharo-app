@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="theme-color" content="#0b3d91">
+  <title>ZHARO · Cargar cliente</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="wrap">
+    <div id="devBanner" class="hidden"></div>
+    <div class="top">
+      <div class="brand">
+        <h1><b>ZHARO</b></h1>
+        <div class="tag">Cargar cliente</div>
+      </div>
+      <div class="userbar" id="userbar"></div>
+    </div>
+
+    <div class="card">
+      <label>Agencia</label>
+      <input id="agencia" autocomplete="off"><div class="msg" id="m_agencia"></div>
+
+      <label>DNI</label>
+      <input id="dni" inputmode="numeric" maxlength="8"><div class="msg" id="m_dni"></div>
+
+      <label>Nombre y apellido</label>
+      <input id="nombre" autocomplete="off"><div class="msg" id="m_nombre"></div>
+
+      <label>Año</label>
+      <select id="anio"><option value="">Elegí el año</option></select><div class="msg" id="m_anio"></div>
+
+      <label>Marca</label>
+      <input id="f_marca" class="flt" placeholder="🔎 Buscar marca" autocomplete="off">
+      <select id="s_marca" disabled><option value="">Primero elegí el año</option></select>
+      <input id="marca" class="otro" placeholder="Escribí la marca"><div class="msg" id="m_marca"></div>
+
+      <label>Modelo</label>
+      <input id="f_modelo" class="flt" placeholder="🔎 Buscar modelo" autocomplete="off">
+      <select id="s_modelo" disabled><option value="">Primero elegí la marca</option></select>
+      <input id="modelo" class="otro" placeholder="Escribí el modelo"><div class="msg" id="m_modelo"></div>
+
+      <label>Versión</label>
+      <input id="f_version" class="flt" placeholder="🔎 Buscar versión (ej: highline, 1.6)" autocomplete="off">
+      <select id="s_version" disabled><option value="">Primero elegí el modelo</option></select>
+      <input id="version" class="otro" placeholder="Escribí la versión"><div class="msg" id="m_version"></div>
+
+      <label>Neto a solicitar <i>(opcional)</i></label>
+      <input id="neto" inputmode="numeric" placeholder="$ 0">
+      <div class="chk"><input type="checkbox" id="max" checked><span>Máximo</span></div>
+      <div class="msg" id="m_neto"></div>
+
+      <label>Plazo (meses)</label>
+      <select id="plazo">
+        <option value="">Elegí</option>
+        <option>12</option><option>18</option><option>24</option>
+        <option>36</option><option>48</option><option>60</option>
+      </select>
+      <div class="msg" id="m_plazo"></div>
+
+      <div class="actions" style="margin-top:18px">
+        <button class="btn primary block" id="send" type="button">Enviar a cotizar</button>
+        <button class="btn block" id="copy" type="button">Copiar payload (prueba)</button>
+      </div>
+    </div>
+
+    <div id="resultBox" class="card hidden"></div>
+  </div>
+
+  <div class="footer"><div class="inner">
+    <a href="index.html" data-nav="home">Inicio</a>
+    <a href="cargar.html" data-nav="cargar" class="active">Cargar</a>
+    <a href="casos.html" data-nav="casos">Casos</a>
+    <a href="config.html" data-nav="config">Config</a>
+  </div></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/casos.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/cargar.js"></script>
+</body>
+</html>
