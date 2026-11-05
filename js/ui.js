@@ -94,7 +94,32 @@ async function zharoSubmitCase(data, user) {
     channels: ZharoCasos.emptyChannels(),
   });
 
-  let remote = { ok: false, skipped: true, reason: "sin_webhook" };
+  let remote = { ok: false, skipped: true, reason: "sin_envio" };
+
+  // 1) GitHub Actions relay (CORS OK desde github.io). Dispara los scripts vía webhook en el runner.
+  if (cfg.githubToken) {
+    try {
+      const repo = cfg.githubRepo || "leocabrales/zharo-app";
+      const r = await fetch("https://api.github.com/repos/" + repo + "/dispatches", {
+        method: "POST",
+        headers: {
+          "Accept": "application/vnd.github+json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + cfg.githubToken,
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        body: JSON.stringify({ event_type: "zharo-case", client_payload: payload }),
+        mode: "cors",
+      });
+      // 204 = accepted
+      remote = { ok: r.status === 204 || r.ok, status: r.status, skipped: false, via: "github" };
+      if (remote.ok) return { saved, payload, remote, text, caseId };
+    } catch (e) {
+      remote = { ok: false, skipped: false, error: String(e && e.message || e), via: "github" };
+    }
+  }
+
+  // 2) Webhook directo (falla CORS desde github.io hacia api2.cursor.sh; útil desde otros orígenes).
   if (cfg.webhookUrl) {
     try {
       const headers = { "Content-Type": "application/json" };
@@ -105,9 +130,9 @@ async function zharoSubmitCase(data, user) {
         body: JSON.stringify(payload),
         mode: "cors",
       });
-      remote = { ok: r.ok, status: r.status, skipped: false };
+      remote = { ok: r.ok, status: r.status, skipped: false, via: "webhook" };
     } catch (e) {
-      remote = { ok: false, skipped: false, error: String(e && e.message || e) };
+      remote = { ok: false, skipped: false, error: String(e && e.message || e), via: "webhook" };
     }
   }
   return { saved, payload, remote, text, caseId };

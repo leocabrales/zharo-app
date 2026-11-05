@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
   <meta name="theme-color" content="#0b3d91">
   <title>ZHARO · Configuración</title>
-  <link rel="stylesheet" href="css/app.css?v=sim2">
+  <link rel="stylesheet" href="css/app.css?v=sim3">
 </head>
 <body>
   <div class="wrap">
@@ -33,6 +33,9 @@
       <input id="webhookUrl" placeholder="https://…/webhook/…" autocomplete="off">
       <label>Webhook key (Bearer)</label>
       <input id="webhookKey" type="password" placeholder="••••••••" autocomplete="off">
+      <label>GitHub token (recomendado para cotizar desde la web)</label>
+      <input id="githubToken" type="password" placeholder="github_pat_… o ghp_…" autocomplete="off">
+      <p class="muted" style="margin-top:8px">El webhook de Cursor no acepta llamadas desde GitHub Pages (CORS). Con un token fine-grained (solo Actions write en <code>leocabrales/zharo-app</code>) el envío dispara la cotización real por script.</p>
       <label>URL base de estado (JSON por caso) <i>opcional</i></label>
       <input id="statusBaseUrl" placeholder="https://raw.githubusercontent.com/leocabrales/zharo-app/main/status" autocomplete="off">
       <div class="muted" style="margin-top:4px">La pantalla de cotización pide <code>&lt;base&gt;/&lt;case_id&gt;.json</code> cada 2–3s. Vacío = default <code>https://raw.githubusercontent.com/leocabrales/zharo-app/main/status</code>.</div>
@@ -62,9 +65,9 @@
     <a href="config.html" data-nav="config" class="active">Config</a>
   </div></div>
 
-  <script src="js/config.js?v=sim2"></script>
-  <script src="js/auth.js?v=sim2"></script>
-  <script src="js/ui.js?v=sim2"></script>
+  <script src="js/config.js?v=sim3"></script>
+  <script src="js/auth.js?v=sim3"></script>
+  <script src="js/ui.js?v=sim3"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       // config accesible sin login para poder pegar el Client ID la primera vez
@@ -76,6 +79,7 @@
       document.getElementById("googleClientId").value = cfg.googleClientId || "";
       document.getElementById("webhookUrl").value = cfg.webhookUrl || "";
       document.getElementById("webhookKey").value = cfg.webhookKey || "";
+      document.getElementById("githubToken").value = cfg.githubToken || "";
       document.getElementById("replyChatId").value = cfg.replyChatId || "";
       document.getElementById("statusBaseUrl").value = cfg.statusBaseUrl || "";
       document.getElementById("devMode").checked = !!cfg.devMode;
@@ -84,6 +88,7 @@
         ZharoConfig.set("googleClientId", document.getElementById("googleClientId").value.trim());
         ZharoConfig.set("webhookUrl", document.getElementById("webhookUrl").value.trim());
         ZharoConfig.set("webhookKey", document.getElementById("webhookKey").value.trim());
+        ZharoConfig.set("githubToken", document.getElementById("githubToken").value.trim());
         ZharoConfig.set("replyChatId", document.getElementById("replyChatId").value.trim());
         ZharoConfig.set("statusBaseUrl", document.getElementById("statusBaseUrl").value.trim());
         ZharoConfig.set("devMode", document.getElementById("devMode").checked ? "1" : "");

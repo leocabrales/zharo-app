@@ -80,3 +80,12 @@ El `text` usa el mismo formato que el formulario de Telegram, para que la rutina
 5. **Enviar a cotizar** sin webhook → queda en Mis casos con estado ENVIADO
 6. Pegar webhook en Config → reenviar un caso de prueba
 7. (Cuando haya Client ID) sacar modo prueba y entrar con Google
+
+## Cotización real desde la web (GitHub token)
+
+El webhook de Cursor **no acepta** `fetch` desde `leocabrales.github.io` (CORS). Para cotizar de verdad:
+
+1. En GitHub → Settings → Developer settings → Fine-grained tokens → Generate.
+2. Repo access: only `leocabrales/zharo-app`. Permission: **Actions: Read and write**.
+3. Pegá el token en Configuración → **GitHub token** y guardá.
+4. Cargá un cliente → Enviar a cotizar. Eso dispara GitHub Actions → webhook → scripts Columbia/Galicia/CreditCar → JSON en `status/`.

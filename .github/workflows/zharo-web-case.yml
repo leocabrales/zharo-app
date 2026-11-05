@@ -1,0 +1,49 @@
+name: ZHARO web case relay
+on:
+  repository_dispatch:
+    types: [zharo-case]
+  push:
+    paths:
+      - 'inbox/*.json'
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (for push path)
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+      - name: Forward repository_dispatch payload
+        if: github.event_name == 'repository_dispatch'
+        env:
+          ZHARO_WEBHOOK_URL: ${{ secrets.ZHARO_WEBHOOK_URL }}
+          ZHARO_WEBHOOK_KEY: ${{ secrets.ZHARO_WEBHOOK_KEY }}
+        run: |
+          set -euo pipefail
+          echo '${{ toJSON(github.event.client_payload) }}' > /tmp/payload.json
+          curl -sS -f -X POST "$ZHARO_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ZHARO_WEBHOOK_KEY" \
+            --data-binary @/tmp/payload.json
+      - name: Forward inbox JSON files
+        if: github.event_name == 'push'
+        env:
+          ZHARO_WEBHOOK_URL: ${{ secrets.ZHARO_WEBHOOK_URL }}
+          ZHARO_WEBHOOK_KEY: ${{ secrets.ZHARO_WEBHOOK_KEY }}
+        run: |
+          set -euo pipefail
+          for f in inbox/*.json; do
+            [ -f "$f" ] || continue
+            echo "Forwarding $f"
+            curl -sS -f -X POST "$ZHARO_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $ZHARO_WEBHOOK_KEY" \
+              --data-binary @"$f"
+            rm -f "$f"
+          done
+          if git status --porcelain | grep -q .; then
+            git config user.name "zharo-bot"
+            git config user.email "zharo-bot@users.noreply.github.com"
+            git add -A inbox
+            git commit -m "inbox: clear forwarded cases" || true
+            git push || true
+          fi
