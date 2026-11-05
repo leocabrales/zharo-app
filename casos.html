@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <title>ZHARO · Gestión de casos</title>
-  <link rel="stylesheet" href="css/app.css?v=gest2">
+  <link rel="stylesheet" href="css/app.css?v=gest3">
 </head>
 <body>
   <div class="wrap wrap-wide">
@@ -21,60 +21,21 @@
       <div class="userbar" id="userbar"></div>
     </div>
 
+    <div class="ops-head"><h2 class="ops-title">Consultas</h2><span class="muted ops-crumb">Inicio / Gestión / Casos</span></div>
+    <div class="ops-kpis" id="opsKpis"></div>
+    <div class="ops-bars card" id="opsBars"></div>
     <div id="alertBox" class="hidden"></div>
-
-    <div class="kpi-grid" id="kpiGrid">
-      <div class="kpi"><div class="kpi-label">Consultas</div><div class="kpi-val" id="kpiTotal">—</div></div>
-      <div class="kpi"><div class="kpi-label">Aprobación</div><div class="kpi-val" id="kpiAprob">—</div><div class="kpi-sub" id="kpiAprobSub"></div></div>
-      <div class="kpi kpi-canal" id="kpiCanales"></div>
-      <div class="kpi"><div class="kpi-label">Top agencias</div><div class="kpi-list" id="kpiAgencias">—</div></div>
-    </div>
-
-    <div class="card filters-card">
-      <div class="filters" id="filters">
-        <div class="flt-group">
-          <span class="flt-label">Canal</span>
-          <div class="chips" data-filter="canal">
-            <button type="button" class="chip active" data-value="cualquiera">Cualquiera</button>
-            <button type="button" class="chip" data-value="columbia">Columbia</button>
-            <button type="button" class="chip" data-value="galicia">Galicia</button>
-            <button type="button" class="chip" data-value="creditcar">CreditCar</button>
-          </div>
-        </div>
-        <div class="flt-group">
-          <span class="flt-label">Resultado</span>
-          <div class="chips" data-filter="resultado">
-            <button type="button" class="chip active" data-value="todos">Todos</button>
-            <button type="button" class="chip" data-value="aprobado">Aprobado</button>
-            <button type="button" class="chip" data-value="sin_oferta">Sin oferta</button>
-            <button type="button" class="chip" data-value="pendiente">Pendiente</button>
-          </div>
-        </div>
-        <div class="flt-row">
-          <label class="flt-select">Agencia
-            <select id="fltAgencia"><option value="todas">Todas</option></select>
-          </label>
-          <label class="flt-select">Comercial
-            <select id="fltComercial"><option value="todos">Todos</option></select>
-          </label>
-          <label class="flt-select">Fecha
-            <select id="fltFecha">
-              <option value="todos">Todos</option>
-              <option value="hoy">Hoy</option>
-              <option value="7">7 días</option>
-              <option value="30" selected>30 días</option>
-            </select>
-          </label>
-        </div>
+    <div class="card ops-card">
+      <div class="ops-toolbar">
+        <input id="fltQ" type="search" placeholder="Buscar cliente, agencia, vehículo, comercial…">
+        <select id="fltAgencia"><option value="todas">Agencia: todas</option></select>
+        <select id="fltComercial"><option value="todos">Comercial: todos</option></select>
+        <select id="fltFecha"><option value="todos">Fecha: todas</option><option value="hoy">Hoy</option><option value="7">7 días</option><option value="30" selected>30 días</option></select>
+        <select id="fltCanal"><option value="cualquiera">Canal: cualquiera</option><option value="[REDACTED]">Columbia</option><option value="galicia">Galicia</option><option value="creditcar">CreditCar</option></select>
+        <select id="fltRes"><option value="todos">Resultado: todos</option><option value="aprobado">Aprobado</option><option value="sin_oferta">Sin oferta</option><option value="pendiente">Pendiente</option></select>
+        <button type="button" class="ops-clear" id="fltClear">Limpiar</button>
       </div>
-      <p class="muted sync-note" id="syncNote">Datos del bot + casos de este dispositivo.</p>
-    </div>
-
-    <div class="card">
-      <div class="list-head">
-        <h2 id="listTitle">Casos</h2>
-        <span class="muted" id="listCount"></span>
-      </div>
+      <div class="ops-meta"><span class="muted" id="syncNote">Datos del bot + casos de este dispositivo.</span><span class="muted" id="listCount"></span></div>
       <div id="lista"></div>
     </div>
   </div>
@@ -86,187 +47,104 @@
     <a href="config.html" data-nav="config">Config</a>
   </div></div>
 
-  <script src="js/config.js?v=gest2"></script>
-  <script src="js/auth.js?v=gest2"></script>
-  <script src="js/casos.js?v=gest2"></script>
-  <script src="js/ui.js?v=gest2"></script>
+  <script src="js/config.js?v=gest3"></script>
+  <script src="js/auth.js?v=gest3"></script>
+  <script src="js/casos.js?v=gest3"></script>
+  <script src="js/ui.js?v=gest3"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const u = await ZharoAuth.requireAuth();
       if (!u) return;
       zharoPaintChrome("casos");
-
-      const state = {
-        all: [],
-        filters: { canal: "cualquiera", resultado: "todos", agencia: "todas", comercial: "todos", fecha: "30" },
-      };
-
-      const lista = document.getElementById("lista");
-      const alertBox = document.getElementById("alertBox");
-
-      function currentFilters() {
-        return {
-          canal: state.filters.canal,
-          resultado: state.filters.resultado,
-          agencia: document.getElementById("fltAgencia").value,
-          comercial: document.getElementById("fltComercial").value,
-          fecha: document.getElementById("fltFecha").value,
-        };
-      }
+      const state = { all: [] };
+      const $ = id => document.getElementById(id);
+      const lista = $("lista"), alertBox = $("alertBox");
+      const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+      const SHORT = { [REDACTED]: "Col", galicia: "Gal", creditcar: "CC" };
+      const currentFilters = () => ({ canal: $("fltCanal").value, resultado: $("fltRes").value, agencia: $("fltAgencia").value, comercial: $("fltComercial").value, fecha: $("fltFecha").value });
 
       function fillSelects(casos) {
-        const ag = ZharoCasos.uniqueValues(casos, "agencia");
-        const co = ZharoCasos.uniqueValues(casos, "comercial");
-        const agEl = document.getElementById("fltAgencia");
-        const coEl = document.getElementById("fltComercial");
-        const agCur = agEl.value;
-        const coCur = coEl.value;
-        agEl.innerHTML = `<option value="todas">Todas</option>` + ag.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join("");
-        coEl.innerHTML = `<option value="todos">Todos</option>` + co.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join("");
-        if ([...agEl.options].some(o => o.value === agCur)) agEl.value = agCur;
-        if ([...coEl.options].some(o => o.value === coCur)) coEl.value = coCur;
+        [["fltAgencia","agencia","todas","Agencia: todas"],["fltComercial","comercial","todos","Comercial: todos"]].forEach(([id,f,all,lab]) => {
+          const el = $(id), cur = el.value;
+          el.innerHTML = `<option value="${all}">${lab}</option>` + ZharoCasos.uniqueValues(casos, f).map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join("");
+          if ([...el.options].some(o => o.value === cur)) el.value = cur;
+        });
       }
-
-      function esc(s) {
-        return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
-      }
+      const tile = (lab, val, sub, cls="") => `<div class="ops-tile ${cls}"><div class="ops-tl">${lab}</div><div class="ops-tv">${val}</div>${sub?`<div class="ops-ts">${sub}</div>`:""}</div>`;
 
       function renderKpis(casos) {
         const s = ZharoCasos.computeStats(casos);
-        document.getElementById("kpiTotal").textContent = String(s.total);
-        document.getElementById("kpiAprob").textContent = s.total ? (s.aprobPct + "%") : "—";
-        document.getElementById("kpiAprobSub").textContent = s.total ? `${s.aprobCount} de ${s.total} con al menos un OK` : "";
-        document.getElementById("kpiCanales").innerHTML =
-          `<div class="kpi-label">Por canal</div>` +
-          ZharoCasos.CHANNEL_IDS.map(id => {
-            const p = s.perCanal[id];
-            const pct = p.pct == null ? "—" : (p.pct + "%");
-            return `<div class="canal-row"><span>${ZharoCasos.CHANNEL_LABEL[id]}</span><b>${pct}</b><small>${p.ok}/${p.n || 0}</small></div>`;
-          }).join("");
-        document.getElementById("kpiAgencias").innerHTML = s.topAgencias.length
-          ? s.topAgencias.map(a => `<div class="ag-row"><span>${esc(a.nombre)}</span><b>${a.n}</b></div>`).join("")
-          : "—";
+        const pend = casos.filter(c => ZharoCasos.overallStatus(c) === "pendiente").length;
+        let h = tile("Total consultas", s.total, "", "t-blue")
+          + tile("Aprobación", s.total ? s.aprobPct + "%" : "—", s.total ? `${s.aprobCount} de ${s.total}` : "", "t-green")
+          + tile("Pendientes", pend, "", "t-amber");
+        h += ZharoCasos.CHANNEL_IDS.map(id => { const p = s.perCanal[id]; return tile(ZharoCasos.CHANNEL_LABEL[id], p.pct == null ? "—" : p.pct + "%", `${p.ok}/${p.n||0} OK`); }).join("");
+        h += s.topAgencias.slice(0, 2).map(a => tile("Agencia", a.n, esc(a.nombre))).join("");
+        $("opsKpis").innerHTML = h;
+        const max = Math.max(1, ...s.topAgencias.map(a => a.n));
+        $("opsBars").innerHTML = s.topAgencias.length ? `<div class="ops-bars-h">Simulaciones por agencia</div>` + s.topAgencias.map(a =>
+          `<div class="ops-bar"><span title="${esc(a.nombre)}">${esc(a.nombre)}</span><div><i style="width:${Math.round(a.n/max*100)}%"></i></div><b>${a.n}</b></div>`).join("") : "";
+        $("opsBars").classList.toggle("hidden", !s.topAgencias.length);
       }
-
       function renderAlerts(casos) {
-        const alerts = ZharoCasos.repeatAlerts(casos, ZharoCasos.REPEAT_THRESHOLD);
-        if (!alerts.length) {
-          alertBox.className = "hidden";
-          alertBox.innerHTML = "";
-          return;
-        }
+        const al = ZharoCasos.repeatAlerts(casos, ZharoCasos.REPEAT_THRESHOLD);
+        if (!al.length) { alertBox.className = "hidden"; alertBox.innerHTML = ""; return; }
         alertBox.className = "banner alert-ops";
-        alertBox.innerHTML =
-          `<div class="alert-title">Alerta de repetición</div>` +
-          alerts.slice(0, 5).map(a =>
-            `<div>Alerta: <b>${esc(a.comercial)}</b> simuló <b>${a.n}</b> veces en <b>${esc(a.agencia)}</b></div>`
-          ).join("");
+        alertBox.innerHTML = `<div class="alert-title">Alerta de repetición</div>` + al.slice(0,5).map(a => `<div><b>${esc(a.comercial)}</b> simuló <b>${a.n}</b> veces en <b>${esc(a.agencia)}</b></div>`).join("");
       }
-
-      function channelPills(c) {
-        return ZharoCasos.CHANNEL_IDS.map(id => {
-          const r = (c.channels[id] || {}).resultado;
-          const cls = r == null ? "wait" : ZharoCasos.pillClass(r);
-          const lab = r == null ? "—" : ZharoCasos.pillLabel(r);
-          const short = { columbia: "Col", galicia: "Gal", creditcar: "CC" }[id];
-          return `<span class="pill ch-pill ${cls}" title="${ZharoCasos.CHANNEL_LABEL[id]}">${short} ${lab}</span>`;
-        }).join("");
-      }
-
+      const chPill = (c, id) => { const r = (c.channels[id]||{}).resultado; const cls = r == null ? "wait" : ZharoCasos.pillClass(r); return `<span class="pill ch-pill ${cls}" title="${ZharoCasos.CHANNEL_LABEL[id]}">${r == null ? "—" : ZharoCasos.pillLabel(r)}</span>`; };
+      const estado = c => { const ov = ZharoCasos.overallStatus(c); return `<span class="ops-st ${ZharoCasos.pillClass(ov)}">${ov === "pre_aprobado" ? "Aprobado" : ov === "sin_oferta" ? "Sin oferta" : "Pendiente"}</span>`; };
       function detailHtml(c) {
-        const rows = ZharoCasos.CHANNEL_IDS.map(id => {
-          const ch = c.channels[id] || {};
-          const r = ch.resultado;
-          const label = r == null ? "sin dato" : (r === "pre_aprobado" ? "Pre aprobado" : r === "sin_oferta" ? "Sin oferta" : "Pendiente");
-          const neto = ch.neto != null ? ZharoCasos.fmtMoney(ch.neto) : "—";
-          const plazos = ch.plazos || "—";
-          return `<div class="detail-ch"><b>${ZharoCasos.CHANNEL_LABEL[id]}</b> · ${label} · neto ${neto} · plazos ${esc(plazos)}</div>`;
-        }).join("");
-        return `<div class="case-detail">${rows}</div>`;
+        return ZharoCasos.CHANNEL_IDS.map(id => { const ch = c.channels[id]||{}, r = ch.resultado;
+          const l = r == null ? "sin dato" : r === "pre_aprobado" ? "Pre aprobado" : r === "sin_oferta" ? "Sin oferta" : "Pendiente";
+          return `<div class="detail-ch"><b>${ZharoCasos.CHANNEL_LABEL[id]}</b> · ${l} · neto ${ch.neto != null ? ZharoCasos.fmtMoney(ch.neto) : "—"} · plazos ${esc(ch.plazos || "—")}</div>`; }).join("");
       }
-
       function renderList(casos) {
-        document.getElementById("listCount").textContent = casos.length + (casos.length === 1 ? " caso" : " casos");
-        if (!casos.length) {
-          lista.innerHTML = `<p class="muted">No hay casos con estos filtros.</p>
-            <a class="btn primary block" href="cargar.html">Cargar una cotización</a>`;
-          return;
-        }
-        lista.innerHTML = casos.map(c => {
-          const ov = ZharoCasos.overallStatus(c);
-          const ovCls = ZharoCasos.pillClass(ov);
-          const ovLab = ov === "pre_aprobado" ? "APROBADO" : ov === "sin_oferta" ? "SIN OFERTA" : "PENDIENTE";
-          const title = ZharoCasos.clientLabel(c);
-          const sub = `${esc(c.agencia || "—")} · ${esc(c.vehiculo || "—")} · neto ${ZharoCasos.fmtMoney(c.neto_pedido)}`;
-          const when = ZharoCasos.fmtWhen(c.fecha_hora);
-          const pills = channelPills(c);
-          if (c.href) {
-            return `<a class="case case-mgmt" href="${c.href}">
-              <div class="case-main">
-                <div class="t">${esc(title)}</div>
-                <div class="s">${sub}</div>
-                <div class="s">${when} · ${esc(c.comercial || "")}</div>
-                <div class="ch-pills">${pills}</div>
-              </div>
-              <span class="pill ${ovCls}">${ovLab}</span>
-            </a>`;
-          }
-          return `<div class="case case-mgmt case-expandable" data-id="${esc(c.id)}" role="button" tabindex="0">
-            <div class="case-main">
-              <div class="t">${esc(title)}</div>
-              <div class="s">${sub}</div>
-              <div class="s">${when} · ${esc(c.comercial || "")}</div>
-              <div class="ch-pills">${pills}</div>
-              ${detailHtml(c)}
-            </div>
-            <span class="pill ${ovCls}">${ovLab}</span>
-          </div>`;
-        }).join("");
-
-        lista.querySelectorAll(".case-expandable").forEach(el => {
-          el.addEventListener("click", () => el.classList.toggle("open"));
-          el.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.classList.toggle("open"); }
-          });
-        });
+        $("listCount").textContent = `Mostrando ${casos.length} ${casos.length === 1 ? "registro" : "registros"}`;
+        if (!casos.length) { lista.innerHTML = `<p class="muted ops-empty">No hay casos con estos filtros. <a href="cargar.html">Cargar una cotización</a></p>`; return; }
+        const rows = casos.map((c, i) => `<tr class="ops-row ${c.href ? "is-link" : "is-exp"}" data-i="${i}">
+            <td class="c-cli"><b>${esc(ZharoCasos.clientLabel(c))}</b></td>
+            <td><span class="ops-ag">${esc(c.agencia || "—")}</span></td>
+            <td class="c-veh" title="${esc(c.vehiculo)}">${esc(c.vehiculo || "—")}</td>
+            <td class="c-num">$ ${ZharoCasos.fmtMoney(c.neto_pedido)}</td>
+            ${ZharoCasos.CHANNEL_IDS.map(id => `<td class="c-ch">${chPill(c, id)}</td>`).join("")}
+            <td>${estado(c)}</td>
+            <td class="c-muted">${esc(c.comercial || "—")}</td>
+            <td class="c-muted c-date">${ZharoCasos.fmtWhen(c.fecha_hora)}</td></tr>
+          ${c.href ? "" : `<tr class="ops-detail hidden" data-d="${i}"><td colspan="10">${detailHtml(c)}</td></tr>`}`).join("");
+        const table = `<div class="ops-tablewrap"><table class="ops-table"><thead><tr><th>Cliente</th><th>Agencia</th><th>Vehículo</th><th>Neto</th>${ZharoCasos.CHANNEL_IDS.map(id => `<th class="c-ch">${SHORT[id]}</th>`).join("")}<th>Estado</th><th>Comercial</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+        const cards = `<div class="ops-cards">` + casos.map((c, i) => `<div class="ops-mcard ${c.href ? "is-link" : "is-exp"}" data-i="${i}">
+            <div class="m1"><b>${esc(ZharoCasos.clientLabel(c))}</b>${estado(c)}</div>
+            <div class="m2">${esc(c.agencia || "—")} · ${esc(c.vehiculo || "—")} · $ ${ZharoCasos.fmtMoney(c.neto_pedido)}</div>
+            <div class="m3">${ZharoCasos.CHANNEL_IDS.map(id => `<span class="m-ch">${SHORT[id]} ${chPill(c,id)}</span>`).join("")}<span class="c-muted">${ZharoCasos.fmtWhen(c.fecha_hora)} · ${esc(c.comercial || "")}</span></div>
+            ${c.href ? "" : `<div class="m-detail hidden">${detailHtml(c)}</div>`}</div>`).join("") + `</div>`;
+        lista.innerHTML = table + cards;
+        lista.querySelectorAll("[data-i]").forEach(el => el.addEventListener("click", () => {
+          const c = casos[+el.dataset.i];
+          if (c.href) { location.href = c.href; return; }
+          const d = el.tagName === "TR" ? lista.querySelector(`tr[data-d="${el.dataset.i}"]`) : el.querySelector(".m-detail");
+          d && d.classList.toggle("hidden"); el.classList.toggle("open");
+        }));
       }
-
       function refresh() {
         const f = currentFilters();
-        state.filters = f;
-        // KPIs and alerts over date+agencia+comercial filtered set (not canal/resultado) so the board stays useful
+        const q = $("fltQ").value.trim().toLowerCase();
         const base = ZharoCasos.applyFilters(state.all, { ...f, canal: "cualquiera", resultado: "todos" });
-        const filtered = ZharoCasos.applyFilters(state.all, f);
-        renderKpis(base);
-        renderAlerts(base);
-        renderList(filtered);
+        let filtered = ZharoCasos.applyFilters(state.all, f);
+        if (q) filtered = filtered.filter(c => [ZharoCasos.clientLabel(c), c.agencia, c.vehiculo, c.comercial].join(" ").toLowerCase().includes(q));
+        renderKpis(base); renderAlerts(base); renderList(filtered);
       }
+      ["fltAgencia","fltComercial","fltFecha","fltCanal","fltRes"].forEach(id => $(id).addEventListener("change", refresh));
+      $("fltQ").addEventListener("input", refresh);
+      $("fltClear").addEventListener("click", () => { $("fltQ").value = ""; $("fltAgencia").value = "todas"; $("fltComercial").value = "todos"; $("fltFecha").value = "30"; $("fltCanal").value = "cualquiera"; $("fltRes").value = "todos"; refresh(); });
 
-      document.querySelectorAll(".chips").forEach(group => {
-        group.addEventListener("click", (e) => {
-          const btn = e.target.closest(".chip");
-          if (!btn) return;
-          group.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
-          btn.classList.add("active");
-          state.filters[group.dataset.filter] = btn.dataset.value;
-          refresh();
-        });
-      });
-      ["fltAgencia", "fltComercial", "fltFecha"].forEach(id => {
-        document.getElementById(id).addEventListener("change", refresh);
-      });
-
-      lista.innerHTML = `<p class="muted">Cargando casos…</p>`;
-      const local = ZharoCasos.mine(u.email);
+      lista.innerHTML = `<p class="muted ops-empty">Cargando casos…</p>`;
       const feed = await ZharoCasos.fetchFeed();
-      state.all = ZharoCasos.mergeCases(local, feed.casos || []);
+      state.all = ZharoCasos.mergeCases(ZharoCasos.mine(u.email), feed.casos || []);
       fillSelects(state.all);
-      const note = document.getElementById("syncNote");
-      if (feed.error) {
-        note.textContent = "Datos de este dispositivo. No se pudo leer el feed del bot (reintentá más tarde).";
-      } else if (feed.updated_at) {
-        note.textContent = `Datos del bot + casos de este dispositivo · feed ${ZharoCasos.fmtWhen(feed.updated_at)}`;
-      }
+      const note = $("syncNote");
+      if (feed.error) note.textContent = "Datos de este dispositivo. No se pudo leer el feed del bot.";
+      else if (feed.updated_at) note.textContent = `Bot + este dispositivo · feed ${ZharoCasos.fmtWhen(feed.updated_at)}`;
       refresh();
     });
   </script>
