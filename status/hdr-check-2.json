@@ -1,7 +1,7 @@
 {
   "case_id": "hdr-check-2",
-  "updated_at": "2026-11-05T17:07:25-03:00",
-  "status": "cotizando",
+  "updated_at": "2026-11-05T17:07:28-03:00",
+  "status": "listo",
   "channels": {
     "columbia": {
       "state": "sin_oferta",
