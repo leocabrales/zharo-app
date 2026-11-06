@@ -8,9 +8,9 @@ Write `status/<case_id>.json` again after **each** bank finishes, not only at th
 
 Also update `status/casos_feed.json` when a channel changes if Mis casos should move without a reload. That page re-reads the feed about every 2.5s.
 
-## How the page reads the file
+## How the open quote page reads a case
 
-Do not expect `?t=` to bust the cache.
+Do not poll GitHub raw, GitHub Pages, or jsDelivr for `status/<case_id>.json`.
 
 Measured 2026-11-06 from this repo:
 
@@ -20,14 +20,47 @@ Measured 2026-11-06 from this repo:
 | `https://leocabrales.github.io/zharo-app/status/<file>` | `max-age=600` | ignored |
 | `https://cdn.jsdelivr.net/gh/leocabrales/zharo-app@main/status/<file>` | `max-age=604800, s-maxage=43200` | ignored |
 
-`https://purge.jsdelivr.net/gh/leocabrales/zharo-app@main/status/<file>` returned `throttled: false` for both edges and the next fetches still served the previous body for more than five minutes. The live page does **not** poll jsDelivr and does not need a purge.
+`https://purge.jsdelivr.net/gh/leocabrales/zharo-app@main/status/<file>` returned `throttled: false` for both edges and the next fetches still served the previous body for more than five minutes. A tab that asks one of those URLs every few seconds can stay on the first partial snapshot (one bank settled, the others still `esperando`) long after git already has `status: "listo"`. `?t=` does not change the object they serve. PDF links inside the JSON may still point at raw GitHub. Those downloads are not the live poll.
 
-The quote page and Mis casos read this repo's status files with:
+The quote page, and any other call that reads a case id through the live fetch, does this instead. No token.
+
+1. `status/submit.json` supplies `url`. That is the same Apps Script web app used to submit a case. The page does not hardcode it. The Contents API is preferred for this one descriptor. A direct read of `submit.json` is only how the page learns the exec URL when that API does not answer. The exec URL changes rarely, so a cached descriptor is not a stale quote.
+
+2. Live poll. Apps Script often responds `302` to `script.googleusercontent.com`, and `fetch()` CORS fails on that hop. JSONP is the read that works. The callback name is unique and `t=` is the current time. This endpoint caches on the full URL, so those params are a real cache bust. Raw, Pages, and jsDelivr are not.
 
 ```
-GET https://api.github.com/repos/leocabrales/zharo-app/contents/status/<file>?ref=main
+GET {submit.url}?action=status&id={case_id}&callback={uniqueName}&t={timestamp}
+```
+
+Success body is the public status object itself, the same shape as `status/<case_id>.json`:
+
+```json
+{
+  "case_id": "...",
+  "updated_at": "...",
+  "status": "cotizando",
+  "channels": {
+    "columbia": { "state": "esperando", "neto": null, "pdf_url": null, "message": null, "updated_at": null },
+    "galicia": { "state": "sin_oferta", "neto": null, "pdf_url": null, "message": null, "updated_at": "..." },
+    "creditcar": { "state": "esperando", "neto": null, "pdf_url": null, "message": null, "updated_at": null }
+  }
+}
+```
+
+The page paints each bank as soon as that bank is in the object. It does not wait until `status` is `listo`. A body that is not this object is not a quote. Do not invent one.
+
+Missing case: `{ "ok": false, "missing": true }`.
+
+3. If that GET fails, times out, or returns missing, the page may read the same file through the GitHub Contents API:
+
+```
+GET https://api.github.com/repos/leocabrales/zharo-app/contents/status/<case_id>.json?ref=main
 Accept: application/vnd.github.raw+json
 If-None-Match: <etag from the previous response>
 ```
 
-No token. A push of `<file>` showed up on that API within a couple of seconds. `304` means unchanged. A custom `statusBaseUrl` that is not this repo's raw / Pages / jsDelivr status folder is fetched directly, so an override still wins.
+No token. Unauthenticated, that API is about 60 requests per hour per IP. A tab that polled it every 2.5 seconds used to spend the budget and then fall through to raw, which is how a partial snapshot stuck for minutes. A 403 or 429 must not switch the live case read to raw, Pages, or jsDelivr. `304` means unchanged.
+
+`submit.json` and `casos_feed.json` are not case-id polls. Mis casos re-reads the feed about every 2.5 seconds. That feed is not served by `action=status`.
+
+A custom `statusBaseUrl` that is not this repo's raw / Pages / jsDelivr status folder is fetched as-is, so an override still wins.
