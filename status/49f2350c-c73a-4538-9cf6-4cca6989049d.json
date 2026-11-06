@@ -1,6 +1,6 @@
 {
   "case_id": "49f2350c-c73a-4538-9cf6-4cca6989049d",
-  "updated_at": "2026-11-06T17:15:31-03:00",
+  "updated_at": "2026-11-06T17:15:36-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
@@ -18,11 +18,11 @@
       "updated_at": "2026-11-06T17:13:07-03:00"
     },
     "creditcar": {
-      "state": "esperando",
-      "neto": null,
-      "pdf_url": null,
-      "message": null,
-      "updated_at": null
+      "state": "sujeto_analisis",
+      "neto": 2808000,
+      "pdf_url": "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status/pdf/49f2350c-c73a-4538-9cf6-4cca6989049d_creditcar.pdf",
+      "message": "CreditCar sin nombre en respuesta. match vía Columbia COINCIDE.",
+      "updated_at": "2026-11-06T17:15:36-03:00"
     }
   }
 }
