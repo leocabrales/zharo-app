@@ -41,12 +41,13 @@
   }
 
   function renderClient(caso) {
-    $("clientName").textContent = caso.nombre || "Cliente";
+    $("clientName").textContent = caso.nombre || (caso.remoteOnly ? "Cotización" : "Cliente");
+    const netoKnown = caso.neto != null && caso.neto !== "";
     const chips = [
       caso.dni ? `<span class="sim-chip">DNI <span class="mono">${caso.dni}</span></span>` : "",
       caso.agencia ? `<span class="sim-chip">${escapeHtml(caso.agencia)}</span>` : "",
       caso.auto ? `<span class="sim-chip">${escapeHtml(caso.auto)}</span>` : "",
-      `<span class="sim-chip">Neto ${escapeHtml(String(caso.neto ?? "máximo"))}</span>`,
+      (netoKnown || !caso.remoteOnly) ? `<span class="sim-chip">Neto ${escapeHtml(String(caso.neto ?? "máximo"))}</span>` : "",
       caso.plazo ? `<span class="sim-chip">${escapeHtml(String(caso.plazo))} meses</span>` : "",
     ].filter(Boolean);
     $("clientMeta").innerHTML = chips.join("");
@@ -381,6 +382,22 @@
     const forceDemo = params.get("demo") === "1";
 
     let caso = id ? ZharoCasos.get(id) : null;
+    if (!caso && id && !forceDemo) {
+      // The public status file has no nombre and no DNI. Paint the banks anyway.
+      caso = ZharoCasos.add({
+        id,
+        email: user.email,
+        agencia: "",
+        dni: "",
+        nombre: "",
+        auto: "",
+        neto: null,
+        plazo: "",
+        status: "cotizando",
+        channels: null,
+        remoteOnly: true,
+      });
+    }
     if (!caso) {
       if (forceDemo) {
         caso = ZharoCasos.add({
