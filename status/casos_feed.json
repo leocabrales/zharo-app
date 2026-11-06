@@ -1,7 +1,35 @@
 {
-  "updated_at": "2026-11-06T16:28:15-03:00",
-  "count": 8,
+  "updated_at": "2026-11-06T16:28:40-03:00",
+  "count": 9,
   "casos": [
+    {
+      "id": "72810381-8310-4619-ad6f-4f068cf1e501",
+      "fecha_hora": "2026-11-06 16:28",
+      "comercial": "Leo (modo prueba)",
+      "agencia": "roma motors",
+      "vehiculo": "FIAT CRONOS CRONOS L/22 1.3 DRIVE GSE CVT 2024",
+      "neto_pedido": 15000000,
+      "plazos": "24",
+      "dni_tail": "705",
+      "source": "web",
+      "channels": {
+        "columbia": {
+          "resultado": "pre_aprobado",
+          "neto": 8671500,
+          "plazos": "24"
+        },
+        "galicia": {
+          "resultado": "pre_aprobado",
+          "neto": 13170119,
+          "plazos": "24"
+        },
+        "creditcar": {
+          "resultado": "pre_aprobado",
+          "neto": 11070000,
+          "plazos": "24"
+        }
+      }
+    },
     {
       "id": "a0b1e73e-6b5c-4ee3-a9cc-762192124ae0",
       "fecha_hora": "2026-11-06 14:54",
