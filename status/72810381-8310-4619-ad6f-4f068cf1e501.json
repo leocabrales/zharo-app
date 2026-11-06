@@ -1,14 +1,14 @@
 {
   "case_id": "72810381-8310-4619-ad6f-4f068cf1e501",
-  "updated_at": "2026-11-06T16:24:26-03:00",
+  "updated_at": "2026-11-06T16:28:03-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
-      "state": "esperando",
-      "neto": null,
-      "pdf_url": null,
+      "state": "pre_aprobado",
+      "neto": 8671500,
+      "pdf_url": "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status/pdf/72810381-8310-4619-ad6f-4f068cf1e501_columbia.pdf",
       "message": null,
-      "updated_at": null
+      "updated_at": "2026-11-06T16:28:03-03:00"
     },
     "galicia": {
       "state": "esperando",
