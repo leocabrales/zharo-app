@@ -88,14 +88,35 @@ const ZharoCasos = (() => {
     }
   }
 
+  function foldState(raw) {
+    return String(raw || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/_/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // Observado, a revisar y notas de score no son una oferta: quedan pendientes.
   function normResultado(raw) {
-    const r = String(raw || "").toLowerCase().trim();
+    const r = foldState(raw);
     if (!r) return "pendiente";
-    if (r === "pre_aprobado" || r === "aprobado" || r === "listo" || r === "ok") return "pre_aprobado";
-    if (r === "sin_oferta" || r === "no" || r === "rechazado") return "sin_oferta";
+    if (r === "sujeto a analisis" || r === "sujeto analisis" || r === "sujetoanalisis") return "sujeto_analisis";
+    if (r === "pre aprobado" || r === "preaprobado" || r === "aprobado" || r === "listo" || r === "ok") return "pre_aprobado";
+    if (r === "sin oferta" || r === "sinoferta" || r === "no" || r === "rechazado") return "sin_oferta";
+    if (r === "error" || r === "err" || r === "timeout") return "error";
     if (r === "esperando" || r === "pendiente" || r === "cotizando" || r === "enviado" || r === "wait") return "pendiente";
-    if (r === "error") return "sin_oferta";
     return "pendiente";
+  }
+
+  function stateLabel(resultado) {
+    const r = normResultado(resultado);
+    if (r === "pre_aprobado") return "Pre aprobado";
+    if (r === "sujeto_analisis") return "Sujeto a análisis";
+    if (r === "sin_oferta") return "Sin oferta";
+    if (r === "error") return "Error temporal";
+    return "Cotizando";
   }
 
   function channelResultFromLocal(ch) {
@@ -209,6 +230,8 @@ const ZharoCasos = (() => {
     if (!vals.length) return "pendiente";
     if (vals.some((v) => v === "pendiente")) return "pendiente";
     if (vals.some((v) => v === "pre_aprobado")) return "pre_aprobado";
+    if (vals.some((v) => v === "sujeto_analisis")) return "sujeto_analisis";
+    if (vals.every((v) => v === "error")) return "error";
     return "sin_oferta";
   }
 
@@ -254,19 +277,10 @@ const ZharoCasos = (() => {
         const ch = c.channels[canal] || {};
         const r = ch.resultado;
         if (r == null) return false;
-        if (res) {
-          if (res === "aprobado") return r === "pre_aprobado";
-          if (res === "sin_oferta") return r === "sin_oferta";
-          if (res === "pendiente") return r === "pendiente";
-        }
+        if (res) return matchResultado(r, res);
         return true;
       }
-      if (res) {
-        const ov = overallStatus(c);
-        if (res === "aprobado") return ov === "pre_aprobado";
-        if (res === "sin_oferta") return ov === "sin_oferta";
-        if (res === "pendiente") return ov === "pendiente";
-      }
+      if (res) return matchResultado(overallStatus(c), res);
       return true;
     });
   }
@@ -355,24 +369,32 @@ const ZharoCasos = (() => {
     return c.source === "web" ? "Caso web" : "Consulta bot";
   }
 
+  function matchResultado(r, res) {
+    if (res === "aprobado" || res === "pre_aprobado") return r === "pre_aprobado";
+    if (res === "sujeto_analisis") return r === "sujeto_analisis";
+    if (res === "sin_oferta") return r === "sin_oferta";
+    if (res === "error") return r === "error";
+    if (res === "pendiente" || res === "cotizando") return r === "pendiente";
+    return true;
+  }
+
   function pillClass(resultado) {
     const r = normResultado(resultado);
     if (r === "pre_aprobado") return "ok";
+    if (r === "sujeto_analisis") return "review";
+    if (r === "error") return "err";
     if (r === "sin_oferta") return "no";
     return "wait";
   }
 
   function pillLabel(resultado) {
-    const r = normResultado(resultado);
-    if (r === "pre_aprobado") return "OK";
-    if (r === "sin_oferta") return "NO";
-    return "…";
+    return stateLabel(resultado);
   }
 
   return {
     list, add, get, update, mine, emptyChannels, CHANNEL_IDS, CHANNEL_LABEL,
     REPEAT_THRESHOLD, fetchFeed, mergeCases, applyFilters, computeStats,
     repeatAlerts, uniqueValues, overallStatus, fmtMoney, fmtWhen, clientLabel,
-    pillClass, pillLabel, normResultado, feedUrl,
+    pillClass, pillLabel, stateLabel, normResultado, feedUrl,
   };
 })();

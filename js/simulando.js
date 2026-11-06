@@ -58,31 +58,100 @@
     })[c]);
   }
 
+  const INTERNAL_MARK = /observado|\bscore\b|l[ií]nea|\ba\s+revisar\b|versi[oó]n\s+cotizada|conclusi[oó]n\s+interna|sujeto a an[aá]lisis crediticio|\bpasa\b|\brechazo\b/i;
+
+  function publicText(text) {
+    if (text == null) return "";
+    const raw = String(text).replace(/\u00a0/g, " ").trim();
+    if (!raw) return "";
+    const parts = raw.split(/\n+|(?<=[.!?])\s+|\s+[·•|]\s+/).map((s) => s.trim()).filter(Boolean);
+    return parts.filter((p) => !INTERNAL_MARK.test(p)).join(" ").replace(/\s+/g, " ").trim();
+  }
+
+  function isPlazosTip(text) {
+    return /ajusta el monto seg[uú]n lo que puede pagar el cliente/i.test(String(text || ""));
+  }
+
+  function rawTip(st) {
+    const t = st?.tip_plazos;
+    if (t == null || t === "") return "";
+    if (typeof t === "string") return t;
+    if (typeof t === "object") return t.text || t.message || t.tip || "";
+    return "";
+  }
+
+  function channelCopy(ch, st) {
+    const message = publicText(st?.message);
+    const tipField = publicText(rawTip(st));
+    let tip = "";
+    if (ch.id === "galicia") {
+      if (tipField) tip = tipField;
+      else if (isPlazosTip(message)) tip = message;
+    }
+    const note = message && message !== tip ? message : "";
+    return { tip, note };
+  }
+
+  function galiciaOptions(ch, st) {
+    if (ch.id !== "galicia" || !Array.isArray(st?.options)) return null;
+    const fija = [];
+    const uva = [];
+    for (const o of st.options) {
+      if (!o || typeof o !== "object") continue;
+      const tipoRaw = String(o.tipo || o.type || "").trim();
+      if (!tipoRaw || o.neto == null || o.neto === "") continue;
+      if (/uva/i.test(tipoRaw)) uva.push(o.neto);
+      else if (/tasa\s*fija|\bfija\b/i.test(tipoRaw)) fija.push(o.neto);
+    }
+    if (!fija.length || !uva.length) return null;
+    return [
+      ...fija.map((neto) => ({ tipo: "TASA FIJA", neto })),
+      ...uva.map((neto) => ({ tipo: "UVA", neto })),
+    ];
+  }
+
+  function netoHtml(ch, st) {
+    const options = galiciaOptions(ch, st);
+    if (!options) {
+      return `<div class="ch-neto"><small>NETO AGENCIA</small>${escapeHtml(money(st?.neto))}</div>`;
+    }
+    return `<div class="ch-options">${options.map((o) => `<div class="ch-opt"><span class="ch-opt-tipo">${escapeHtml(o.tipo)}</span><div class="ch-neto"><small>NETO AGENCIA</small>${escapeHtml(money(o.neto))}</div></div>`).join("")}</div>`;
+  }
+
+  function copyHtml(ch, st) {
+    const { tip, note } = channelCopy(ch, st);
+    return `${tip ? `<p class="ch-tip">${escapeHtml(tip)}</p>` : ""}${note ? `<p class="ch-note">${escapeHtml(note)}</p>` : ""}`;
+  }
+
   function channelHtml(ch, st) {
     const state = st?.state || "esperando";
     const cls =
-      state === "pre_aprobado" || state === "ok" ? "is-ok" :
-      state === "sin_oferta" || state === "no" ? "is-no" :
+      state === "sujeto_analisis" ? "is-analisis" :
+      state === "pre_aprobado" ? "is-ok" :
+      state === "sin_oferta" ? "is-no" :
       state === "error" ? "is-err" : "is-wait";
 
-    let statusLabel = "Calculando";
-    if (cls === "is-ok") statusLabel = "Pre aprobado";
+    let statusLabel = "Cotizando";
+    if (cls === "is-analisis") statusLabel = "Sujeto a análisis";
+    else if (cls === "is-ok") statusLabel = "Pre aprobado";
     else if (cls === "is-no") statusLabel = "Sin oferta";
     else if (cls === "is-err") statusLabel = "Error temporal";
-    else statusLabel = "Cotizando";
 
     let result = "";
-    if (cls === "is-ok") {
+    if (cls === "is-ok" || cls === "is-analisis") {
+      const pdf = st?.pdf_url
+        ? `<a class="ch-pdf" href="${escapeHtml(st.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`
+        : (cls === "is-ok" ? `<span class="ch-msg">Oferta lista</span>` : "");
       result = `<div class="ch-result">
-        <div class="ch-neto"><small>NETO AGENCIA</small>${money(st.neto)}</div>
-        <div class="ch-actions">
-          ${st.pdf_url ? `<a class="ch-pdf" href="${escapeHtml(st.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` : `<span class="ch-msg">Oferta lista</span>`}
-        </div>
+        ${netoHtml(ch, st)}
+        ${pdf ? `<div class="ch-actions">${pdf}</div>` : ""}
+        ${copyHtml(ch, st)}
       </div>`;
     } else if (cls === "is-no") {
       result = `<div class="ch-result"><div class="ch-msg">Sin oferta disponible en este canal.</div></div>`;
     } else if (cls === "is-err") {
-      result = `<div class="ch-result"><div class="ch-msg">${escapeHtml(st.message || "No se pudo consultar. Reintentá más tarde.")}</div></div>`;
+      const msg = publicText(st?.message) || "No se pudo consultar. Reintentá más tarde.";
+      result = `<div class="ch-result"><div class="ch-msg">${escapeHtml(msg)}</div></div>`;
     }
 
     const tick = (TICKERS[ch.id] || "").repeat(4);
@@ -161,10 +230,14 @@
         state: normalizeState(r.state || r.resultado || r.status),
         neto: r.neto != null ? r.neto : cur.neto,
         pdf_url: r.pdf_url || r.pdf || cur.pdf_url || null,
-        message: r.message || r.msg || null,
+        message: Object.prototype.hasOwnProperty.call(r, "message") || Object.prototype.hasOwnProperty.call(r, "msg")
+          ? (r.message || r.msg || null)
+          : (cur.message || null),
+        tip_plazos: Object.prototype.hasOwnProperty.call(r, "tip_plazos") ? (r.tip_plazos ?? null) : (cur.tip_plazos || null),
+        options: Object.prototype.hasOwnProperty.call(r, "options") ? sanitizeOptions(r.options) : (cur.options || null),
         updated_at: r.updated_at || new Date().toISOString(),
       };
-      if (next.state !== cur.state || next.neto !== cur.neto || next.pdf_url !== cur.pdf_url) {
+      if (channelSignature(next) !== channelSignature(cur)) {
         caso.channels[ch.id] = next;
         changed = true;
       }
@@ -175,12 +248,48 @@
     return changed;
   }
 
+  function foldState(raw) {
+    return String(raw || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/_/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function sanitizeOptions(options) {
+    if (!Array.isArray(options)) return null;
+    const out = [];
+    for (const o of options) {
+      if (!o || typeof o !== "object") continue;
+      const tipo = String(o.tipo || o.type || "").trim();
+      if (!tipo || o.neto == null || o.neto === "") continue;
+      out.push({ tipo, neto: o.neto });
+    }
+    return out.length ? out : null;
+  }
+
+  function channelSignature(ch) {
+    const c = ch || {};
+    return JSON.stringify({
+      state: c.state || null,
+      neto: c.neto ?? null,
+      pdf_url: c.pdf_url || null,
+      message: c.message || null,
+      tip_plazos: c.tip_plazos || null,
+      options: c.options || null,
+    });
+  }
+
+  // Observado, a revisar y notas de score no se muestran como pre aprobado.
   function normalizeState(s) {
-    const v = String(s || "").toLowerCase();
-    if (["pre_aprobado", "preaprobado", "ok", "aprobado", "oferta"].includes(v)) return "pre_aprobado";
-    if (["sin_oferta", "sin oferta", "no", "sinoferta"].includes(v)) return "sin_oferta";
+    const v = foldState(s);
+    if (v === "sujeto a analisis" || v === "sujeto analisis" || v === "sujetoanalisis") return "sujeto_analisis";
+    if (["pre aprobado", "preaprobado", "ok", "aprobado", "oferta"].includes(v)) return "pre_aprobado";
+    if (["sin oferta", "sinoferta", "no", "rechazado"].includes(v)) return "sin_oferta";
     if (["error", "err", "timeout"].includes(v)) return "error";
-    if (["esperando", "cotizando", "pending", "wait"].includes(v)) return "esperando";
+    if (["esperando", "cotizando", "pending", "wait", "pendiente", "enviado"].includes(v)) return "esperando";
     return "esperando";
   }
 
@@ -204,13 +313,24 @@
     const plan = [
       { at: 1800, id: "columbia", state: "pre_aprobado", neto: 4850000, pdf_url: "" },
       { at: 3800, id: "galicia", state: "sin_oferta" },
-      { at: 5600, id: "creditcar", state: "pre_aprobado", neto: 4200000, pdf_url: "" },
+      { at: 5600, id: "creditcar", state: "sujeto_analisis", neto: 4200000, pdf_url: "" },
     ];
     // Variación leve según dni para que no siempre sea igual
     const seed = Number(String(caso.dni || "1").slice(-1)) || 1;
     if (seed % 2 === 0) {
       plan[0] = { at: 1600, id: "columbia", state: "sin_oferta" };
-      plan[1] = { at: 3400, id: "galicia", state: "pre_aprobado", neto: 5100000, pdf_url: "" };
+      plan[1] = {
+        at: 3400,
+        id: "galicia",
+        state: "pre_aprobado",
+        neto: 5100000,
+        pdf_url: "",
+        message: "Este canal ajusta el monto según lo que puede pagar el cliente. A 18 meses: neto hasta $12.000.000 (cuota aprox $1.211.009).",
+        options: [
+          { tipo: "TASA FIJA", neto: 5100000 },
+          { tipo: "UVA", neto: 4700000 },
+        ],
+      };
     }
     for (const step of plan) {
       setTimeout(() => {
@@ -219,6 +339,9 @@
           state: step.state,
           neto: step.neto ?? null,
           pdf_url: step.pdf_url || null,
+          message: step.message || null,
+          tip_plazos: step.tip_plazos || null,
+          options: step.options || null,
           updated_at: new Date().toISOString(),
         };
         if (settledCount(fresh) === CHANNELS.length) fresh.status = "listo";
