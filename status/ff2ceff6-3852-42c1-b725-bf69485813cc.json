@@ -1,6 +1,6 @@
 {
   "case_id": "ff2ceff6-3852-42c1-b725-bf69485813cc",
-  "updated_at": "2026-11-06T17:51:51-03:00",
+  "updated_at": "2026-11-06T17:51:56-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
@@ -11,11 +11,11 @@
       "updated_at": "2026-11-06T17:51:51-03:00"
     },
     "galicia": {
-      "state": "esperando",
+      "state": "sin_oferta",
       "neto": null,
       "pdf_url": null,
       "message": null,
-      "updated_at": null
+      "updated_at": "2026-11-06T17:51:56-03:00"
     },
     "creditcar": {
       "state": "esperando",
