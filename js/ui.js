@@ -97,7 +97,7 @@ async function zharoSubmitCase(data, user) {
   let remote = { ok: false, skipped: true, reason: "sin_envio" };
 
   // 1) Envío público, sin token. {statusBase}/submit.json → { url, content_type }.
-  // raw.githubusercontent.com cachea ~5 min: el query t= evita un 404 viejo.
+  // El GET no usa ?t=: raw.githubusercontent.com ignora el query y cachea 5 min.
   // El POST va como text/plain: el mismo JSON, sin preflight. No mandar application/json.
   const pub = await zharoPublicSubmitTarget(cfg.statusBaseUrl);
   if (pub.url) {
@@ -182,12 +182,12 @@ function zharoPublicContentType(value) {
 async function zharoPublicSubmitTarget(statusBase) {
   const base = String(statusBase || "").trim().replace(/\/$/, "");
   if (!base) return { url: "", contentType: "" };
-  const desc = base + "/submit.json?t=" + Date.now();
+  const desc = base + "/submit.json";
   try {
-    const r = await fetch(desc, { cache: "no-store", mode: "cors" });
-    if (!r.ok) return { url: "", contentType: "" };
-    const data = await r.json();
-    const url = data && typeof data.url === "string" ? zharoHttpsUrl(data.url) : "";
+    const got = await ZharoConfig.fetchLiveJson(desc);
+    const data = got && got.json;
+    if (!got || !got.ok || !data || typeof data !== "object") return { url: "", contentType: "" };
+    const url = typeof data.url === "string" ? zharoHttpsUrl(data.url) : "";
     if (!url) return { url: "", contentType: "" };
     return { url, contentType: zharoPublicContentType(data.content_type) };
   } catch (e) {

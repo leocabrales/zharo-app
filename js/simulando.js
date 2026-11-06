@@ -293,20 +293,23 @@
     return "esperando";
   }
 
+  // "updated" pinta. "same" es un 304 (el archivo no cambió). "missing" todavía no está en git.
   async function pollOnce(caso) {
     const url = statusUrlFor(caso.id);
-    if (!url) return false;
+    if (!url) return "error";
     try {
-      const r = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), { cache: "no-store" });
-      if (!r.ok) return false;
-      const json = await r.json();
-      if (applyRemoteStatus(caso, json)) {
+      const got = await ZharoConfig.fetchLiveJson(url);
+      if (got.missing) return "missing";
+      if (!got.ok || !got.json || got.notModified) return got.ok ? "same" : "error";
+      if (applyRemoteStatus(caso, got.json)) {
         ZharoCasos.update(caso.id, { channels: caso.channels, status: caso.status });
         paintChannels(caso, { flip: true });
-        return true;
+        return "updated";
       }
-    } catch (_) { /* ignore */ }
-    return false;
+      return "same";
+    } catch (_) {
+      return "error";
+    }
   }
 
   function startDemo(caso) {
@@ -426,11 +429,17 @@
     }
 
     if (hasStatusBase) {
+      let missStreak = 0;
       const tick = async () => {
         const c = ensureChannels(ZharoCasos.get(caso.id) || caso);
-        await pollOnce(c);
+        const result = await pollOnce(c);
+        if (result === "missing") missStreak += 1;
+        else missStreak = 0;
         const fresh = ensureChannels(ZharoCasos.get(caso.id) || c);
-        if (settledCount(fresh) < CHANNELS.length && fresh.status !== "listo") setTimeout(tick, 2500);
+        // Cada canal se pinta solo. Recién con los tres (o status listo) se deja de pedir.
+        if (settledCount(fresh) < CHANNELS.length && fresh.status !== "listo") {
+          setTimeout(tick, missStreak >= 8 ? 8000 : 2500);
+        }
       };
       // Siempre pedimos el status al abrir (también si ya está listo) para no mostrar demo viejo
       setTimeout(tick, 200);

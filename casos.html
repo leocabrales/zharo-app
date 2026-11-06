@@ -47,10 +47,10 @@
     <a href="config.html" data-nav="config">Config</a>
   </div></div>
 
-  <script src="js/config.js?v=gest4"></script>
+  <script src="js/config.js?v=live1"></script>
   <script src="js/auth.js?v=gest4"></script>
-  <script src="js/casos.js?v=gest5"></script>
-  <script src="js/ui.js?v=gest4"></script>
+  <script src="js/casos.js?v=live1"></script>
+  <script src="js/ui.js?v=live1"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const u = await ZharoAuth.requireAuth();
@@ -141,13 +141,37 @@
       $("fltClear").addEventListener("click", () => { $("fltQ").value = ""; $("fltAgencia").value = "todas"; $("fltComercial").value = "todos"; $("fltFecha").value = "todos"; $("fltCanal").value = "cualquiera"; $("fltRes").value = "todos"; refresh(); });
 
       lista.innerHTML = `<p class="muted ops-empty">Cargando casos…</p>`;
-      const feed = await ZharoCasos.fetchFeed();
-      state.all = ZharoCasos.mergeCases(ZharoCasos.mine(u.email), feed.casos || []);
-      fillSelects(state.all);
       const note = $("syncNote");
-      if (feed.error) note.textContent = "Datos de este dispositivo. No se pudo leer el feed del bot.";
-      else if (feed.updated_at) note.textContent = `Bot + este dispositivo · feed ${ZharoCasos.fmtWhen(feed.updated_at)}`;
-      refresh();
+      let lastFeed = { casos: [] };
+      let lastSig = "";
+      async function syncFeed() {
+        const feed = await ZharoCasos.fetchFeed();
+        if (feed.notModified) return;
+        if (feed.error && state.all.length) return;
+        const sig = JSON.stringify(feed.casos || []) + "\n" + (feed.updated_at || "") + "\n" + (feed.error || "");
+        if (sig === lastSig) return;
+        lastSig = sig;
+        lastFeed = feed;
+        state.all = ZharoCasos.mergeCases(ZharoCasos.mine(u.email), feed.casos || []);
+        fillSelects(state.all);
+        if (feed.error) note.textContent = "Datos de este dispositivo. No se pudo leer el feed del bot.";
+        else if (feed.updated_at) note.textContent = `Bot + este dispositivo · feed ${ZharoCasos.fmtWhen(feed.updated_at)}`;
+        else note.textContent = "Datos del bot + casos de este dispositivo.";
+        refresh();
+      }
+      await syncFeed();
+      const again = async () => {
+        await syncFeed();
+        setTimeout(again, 2500);
+      };
+      setTimeout(again, 2500);
+      try {
+        const bc = new BroadcastChannel("zharo_casos");
+        bc.onmessage = () => {
+          state.all = ZharoCasos.mergeCases(ZharoCasos.mine(u.email), lastFeed.casos || []);
+          refresh();
+        };
+      } catch (_) {}
     });
   </script>
 </body>

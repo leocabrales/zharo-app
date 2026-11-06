@@ -76,15 +76,25 @@ const ZharoCasos = (() => {
   }
 
   async function fetchFeed() {
-    const url = feedUrl() + (feedUrl().includes("?") ? "&" : "?") + "t=" + Date.now();
+    const url = feedUrl();
     try {
-      const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      const data = await r.json();
-      return Array.isArray(data.casos) ? data : { casos: [], updated_at: null, count: 0 };
+      const got = (typeof ZharoConfig !== "undefined" && ZharoConfig.fetchLiveJson)
+        ? await ZharoConfig.fetchLiveJson(url)
+        : { ok: false };
+      if (!got.ok || !got.json) {
+        return { casos: [], updated_at: null, count: 0, error: got.missing ? "404" : "fetch", notModified: false };
+      }
+      const data = got.json;
+      const casos = Array.isArray(data.casos) ? data.casos : [];
+      return {
+        casos,
+        updated_at: data.updated_at || null,
+        count: data.count || casos.length,
+        notModified: !!got.notModified,
+      };
     } catch (e) {
       console.warn("casos_feed", e);
-      return { casos: [], updated_at: null, count: 0, error: String(e.message || e) };
+      return { casos: [], updated_at: null, count: 0, error: String(e.message || e), notModified: false };
     }
   }
 
