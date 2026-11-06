@@ -315,8 +315,9 @@
       { at: 3800, id: "galicia", state: "sin_oferta" },
       { at: 5600, id: "creditcar", state: "sujeto_analisis", neto: 4200000, pdf_url: "" },
     ];
-    // Variación leve según dni para que no siempre sea igual
-    const seed = Number(String(caso.dni || "1").slice(-1)) || 1;
+    // Variación leve según dni. El 0 final es par (0 % 2 === 0).
+    const lastDigit = String(caso.dni || "").slice(-1);
+    const seed = /^\d$/.test(lastDigit) ? Number(lastDigit) : 1;
     if (seed % 2 === 0) {
       plan[0] = { at: 1600, id: "columbia", state: "sin_oferta" };
       plan[1] = {

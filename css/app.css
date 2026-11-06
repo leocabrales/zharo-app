@@ -53,6 +53,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(11,61,145,.25);bo
 .banner{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:14px}
 .banner.dev{background:#fef3c7;border-color:#f59e0b;color:#92400e}
 .banner.ok{background:#ecfdf3;border-color:#abefc6;color:#067647}
+.banner.err{background:#fef3f2;border-color:#fecdca;color:#b42318}
 .hero{text-align:center;padding:28px 8px 8px}
 .hero .logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(145deg,var(--blue),#1d4ed8);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:800;letter-spacing:1px;margin-bottom:12px;box-shadow:var(--shadow)}
 .actions{display:grid;gap:10px;margin-top:16px}

@@ -234,6 +234,14 @@ function readForm() {
   };
 }
 
+function showSendError(out) {
+  const msg = "No se pudo enviar el caso a cotizar. No se muestran ofertas porque la consulta no salió. Reintentá desde acá. En Mis casos queda en espera.";
+  out.classList.remove("hidden");
+  out.innerHTML = `<div class="banner err" role="alert">${msg}</div>`;
+  out.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  zharoToast("No se pudo enviar a cotizar");
+}
+
 function wireCombo(k) {
   const inp = comboIn(k);
   const ul = comboList(k);
@@ -318,10 +326,13 @@ async function bootCargar() {
         return;
       }
       const res = await zharoSubmitCase(data, user);
-      // Ir directo a la pantalla de cotización en vivo (resultados en la web, no Telegram).
-      const demo = (!res.remote.ok) ? "&demo=1" : "";
-      zharoToast(res.remote.ok ? "Cotizando…" : "Demo en vivo");
-      location.href = "simulando.html?id=" + encodeURIComponent(res.caseId || res.saved.id) + demo;
+      // Solo hay cotización en vivo si el caso salió de verdad. Nunca inventar ofertas.
+      if (res.remote && res.remote.ok) {
+        zharoToast("Cotizando…");
+        location.href = "simulando.html?id=" + encodeURIComponent(res.caseId || res.saved.id);
+        return;
+      }
+      showSendError(out);
       return;
     } finally {
       btn.disabled = false;

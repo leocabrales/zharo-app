@@ -41,6 +41,6 @@ Formulario Telegram WebApp: https://github.com/leocabrales/zharo-form
 
 ## Cotización en vivo
 Después de **Enviar a cotizar**, la app abre `simulando.html?id=<case_id>` con cards de Columbia / Galicia / CreditCar.
-- Demo: `simulando.html?demo=1` o envío sin webhook → reveals escalonados locales.
+- Demo: solo `simulando.html?demo=1`, a propósito, para probar estados de la UI. Si el envío remoto falla, el formulario avisa el error y no inventa ofertas.
 - Real: configurar **URL base de estado** en Configuración; el bot escribe `{base}/{case_id}.json` (ver `/workspace/zharo/WEB_REPLY_MODE.md` en el bot).
 - Los casos web usan `reply_mode: "web"` — el resultado se ve en la web, no por Telegram.
