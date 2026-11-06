@@ -1,7 +1,35 @@
 {
-  "updated_at": "2026-11-06T14:53:35-03:00",
-  "count": 7,
+  "updated_at": "2026-11-06T16:28:15-03:00",
+  "count": 8,
   "casos": [
+    {
+      "id": "a0b1e73e-6b5c-4ee3-a9cc-762192124ae0",
+      "fecha_hora": "2026-11-06 14:54",
+      "comercial": "Leo (modo prueba)",
+      "agencia": "INDY CARS",
+      "vehiculo": "CITROEN C 3 AIRCROSS C 3 AIRCROSS 1.6 FEEL 2022",
+      "neto_pedido": 12000000,
+      "plazos": "24",
+      "dni_tail": "525",
+      "source": "web",
+      "channels": {
+        "columbia": {
+          "resultado": "pre_aprobado",
+          "neto": 12000000,
+          "plazos": "24"
+        },
+        "galicia": {
+          "resultado": "pre_aprobado",
+          "neto": 11205600,
+          "plazos": "24"
+        },
+        "creditcar": {
+          "resultado": "pre_aprobado",
+          "neto": 9936000,
+          "plazos": "24"
+        }
+      }
+    },
     {
       "id": "csv_7f0fbd8d60d1e821",
       "fecha_hora": "2026-11-05 20:23",
