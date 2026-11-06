@@ -1,6 +1,6 @@
 {
   "case_id": "72810381-8310-4619-ad6f-4f068cf1e501",
-  "updated_at": "2026-11-06T16:28:03-03:00",
+  "updated_at": "2026-11-06T16:28:07-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
@@ -18,11 +18,11 @@
       "updated_at": null
     },
     "creditcar": {
-      "state": "esperando",
-      "neto": null,
-      "pdf_url": null,
+      "state": "pre_aprobado",
+      "neto": 11070000,
+      "pdf_url": "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status/pdf/72810381-8310-4619-ad6f-4f068cf1e501_creditcar.pdf",
       "message": null,
-      "updated_at": null
+      "updated_at": "2026-11-06T16:28:07-03:00"
     }
   }
 }
