@@ -11,7 +11,7 @@ Reemplaza (de a poco) el flujo por Telegram: login → cargar cliente → ver mi
 - Modo prueba (solo Leo) con banner visible
 - Formulario **Cargar cliente** (agencia, DNI, nombre, año→marca→modelo→versión, neto/máximo, plazo)
 - Catálogo de autos reutilizado desde [zharo-form/autos](https://leocabrales.github.io/zharo-form/autos/)
-- Envío al mismo webhook del bot (URL/clave en localStorage) + “Copiar payload”
+- Envío a cotizar por la URL pública de `status/submit.json` (sin token). Token de GitHub y webhook quedan como respaldo en localStorage. “Copiar payload” sigue disponible.
 - Mis casos (localStorage, stub)
 
 ## Costo
@@ -42,5 +42,5 @@ Formulario Telegram WebApp: https://github.com/leocabrales/zharo-form
 ## Cotización en vivo
 Después de **Enviar a cotizar**, la app abre `simulando.html?id=<case_id>` con cards de Columbia / Galicia / CreditCar.
 - Demo: solo `simulando.html?demo=1`, a propósito, para probar estados de la UI. Si el envío remoto falla, el formulario avisa el error y no inventa ofertas.
-- Real: configurar **URL base de estado** en Configuración; el bot escribe `{base}/{case_id}.json` (ver `/workspace/zharo/WEB_REPLY_MODE.md` en el bot).
+- Real: la página lee `{statusBase}/submit.json` (`url` + `content_type`, con cache-bust) y hace POST del mismo JSON del caso a esa URL como `text/plain` (sin preflight). Sin token en Config. Si ese archivo no está o el POST falla, recién ahí se usa el token de GitHub o el webhook. El bot escribe `{base}/{case_id}.json` (ver `/workspace/zharo/WEB_REPLY_MODE.md` en el bot).
 - Los casos web usan `reply_mode: "web"` — el resultado se ve en la web, no por Telegram.

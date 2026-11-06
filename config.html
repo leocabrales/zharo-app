@@ -27,18 +27,18 @@
     </div>
 
     <div class="card">
-      <h2>Webhook del bot</h2>
-      <p class="muted">Misma URL/clave que usa el poller de Telegram (<code>ZHARO_WEBHOOK_URL</code> + <code>ZHARO_WEBHOOK_KEY</code>). Se guardan solo en este navegador (localStorage), no en el repo.</p>
-      <label>Webhook URL</label>
+      <h2>Envío a cotizar</h2>
+      <p class="muted">Enviar a cotizar no pide token. Lee <code>submit.json</code> en la URL base de estado (<code>{ "url": "https://…" }</code>) y manda el caso ahí. Token y webhook quedan solo en este navegador, como respaldo si ese envío no está o falla.</p>
+      <label>Webhook URL <i>(respaldo)</i></label>
       <input id="webhookUrl" placeholder="https://…/webhook/…" autocomplete="off">
       <label>Webhook key (Bearer)</label>
       <input id="webhookKey" type="password" placeholder="••••••••" autocomplete="off">
-      <label>GitHub token (recomendado para cotizar desde la web)</label>
+      <label>GitHub token <i>(respaldo)</i></label>
       <input id="githubToken" type="password" placeholder="github_pat_… o ghp_…" autocomplete="off">
-      <p class="muted" style="margin-top:8px">El webhook de Cursor no acepta llamadas desde GitHub Pages (CORS). Token fine-grained en <code>leocabrales/zharo-app</code> con <b>Contents: Read and write</b> (y Actions write si querés). Eso dispara la cotización real por script.</p>
+      <p class="muted" style="margin-top:8px">Si hace falta el respaldo: token fine-grained en <code>leocabrales/zharo-app</code> con <b>Contents: Read and write</b>. El webhook de Cursor no acepta llamadas directas desde GitHub Pages (CORS).</p>
       <label>URL base de estado (JSON por caso) <i>opcional</i></label>
       <input id="statusBaseUrl" placeholder="https://raw.githubusercontent.com/leocabrales/zharo-app/main/status" autocomplete="off">
-      <div class="muted" style="margin-top:4px">La pantalla de cotización pide <code>&lt;base&gt;/&lt;case_id&gt;.json</code> cada 2–3s. Vacío = default <code>https://raw.githubusercontent.com/leocabrales/zharo-app/main/status</code>.</div>
+      <div class="muted" style="margin-top:4px">La cotización pide <code>&lt;base&gt;/&lt;case_id&gt;.json</code> cada 2–3s. El envío busca <code>&lt;base&gt;/submit.json</code>. Vacío = <code>https://raw.githubusercontent.com/leocabrales/zharo-app/main/status</code>.</div>
 
       <label>Telegram chat_id <i>(legacy, no usar para web)</i></label>
       <input id="replyChatId" inputmode="numeric" placeholder="dejar vacío">
