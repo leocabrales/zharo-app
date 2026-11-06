@@ -1,7 +1,63 @@
 {
-  "updated_at": "2026-11-06T17:52:26-03:00",
-  "count": 10,
+  "updated_at": "2026-11-06T18:09:39-03:00",
+  "count": 12,
   "casos": [
+    {
+      "id": "a6b54856-c59c-4ab5-9f27-d89a01ce77ac",
+      "fecha_hora": "2026-11-06 18:09",
+      "comercial": "Leo (modo prueba)",
+      "agencia": "JUAN MANUEL AUT",
+      "vehiculo": "CHEVROLET SPIN SPIN 1.8 LTZ 5 AS ACTIV L/19 2019",
+      "neto_pedido": "máximo",
+      "plazos": "24",
+      "dni_tail": "235",
+      "source": "web",
+      "channels": {
+        "columbia": {
+          "resultado": "pre_aprobado",
+          "neto": 10081500,
+          "plazos": "24"
+        },
+        "galicia": {
+          "resultado": "sin_oferta",
+          "neto": null,
+          "plazos": "18"
+        },
+        "creditcar": {
+          "resultado": "pre_aprobado",
+          "neto": 9652500,
+          "plazos": "18"
+        }
+      }
+    },
+    {
+      "id": "ff2ceff6-3852-42c1-b725-bf69485813cc",
+      "fecha_hora": "2026-11-06 17:52",
+      "comercial": "Leo (modo prueba)",
+      "agencia": "DEL VALLE CARS",
+      "vehiculo": "FIAT PALIO PALIO 1.4 5 P FIRE L/14 TOP SEGUR. 2018",
+      "neto_pedido": "máximo",
+      "plazos": "24",
+      "dni_tail": "385",
+      "source": "web",
+      "channels": {
+        "columbia": {
+          "resultado": "sin_oferta",
+          "neto": null,
+          "plazos": "24"
+        },
+        "galicia": {
+          "resultado": "sin_oferta",
+          "neto": null,
+          "plazos": "24"
+        },
+        "creditcar": {
+          "resultado": "pendiente",
+          "neto": 6286500,
+          "plazos": "24"
+        }
+      }
+    },
     {
       "id": "49f2350c-c73a-4538-9cf6-4cca6989049d",
       "fecha_hora": "2026-11-06 17:15",
