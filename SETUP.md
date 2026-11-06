@@ -36,14 +36,28 @@ Más adelante, si tienen mails `@zharo…`:
 
 Commit + push para que Pages lo actualice.
 
-## 3) Webhook del bot
+## 3) Envío a cotizar (sin token)
 
-En el servidor del bot ya existen:
+La web no llama al webhook de Cursor directo (CORS desde GitHub Pages). El camino por defecto:
+
+1. Publicá en `main` el archivo `status/submit.json` (misma carpeta que los JSON de estado):
+
+```json
+{
+  "url": "https://script.google.com/macros/s/<id>/exec",
+  "content_type": "text/plain",
+  "updated_at": "2026-11-06T00:00:00Z"
+}
+```
+
+Sin secretos, sin PAT, sin key, sin el id real commiteado en otro lado. La página lo lee con un query `?t=` para no quedar pegada al cache de `raw.githubusercontent.com`. El POST manda el mismo JSON del caso, con `Content-Type: text/plain;charset=UTF-8` (no `application/json`: eso dispara un preflight y este endpoint no lo responde). Si falta `content_type`, igual se manda `text/plain`. Un HTTP 2xx cuenta como enviado.
+
+2. Token de GitHub y webhook URL/key son **respaldo**, solo si `submit.json` no está o ese POST falla. Si los pegás, quedan en `localStorage` de ese navegador, nunca en el repo.
+
+En el servidor del bot ya existen (solo para el respaldo por webhook):
 
 - `ZHARO_WEBHOOK_URL`
 - `ZHARO_WEBHOOK_KEY`
-
-Pegálos en **Configuración** de la web (quedan en `localStorage` de ese navegador).
 
 El payload que manda la web:
 
@@ -77,15 +91,15 @@ El `text` usa el mismo formato que el formulario de Telegram, para que la rutina
 2. Entrar en modo prueba
 3. Cargar cliente: año 2015 → VOLKSWAGEN → GOL → buscar “highline”
 4. Marcar Máximo, plazo 36 → **Copiar payload** (tiene que copiar el texto AGENCIA/DNI/…)
-5. **Enviar a cotizar** sin webhook → queda en Mis casos con estado ENVIADO
-6. Pegar webhook en Config → reenviar un caso de prueba
+5. **Enviar a cotizar** sin token y sin webhook: si `submit.json` apunta a un endpoint con CORS, abre la cotización en vivo. Si el envío falla, se queda en Cargar con un error y no inventa ofertas.
+6. El demo de la UI es solo `simulando.html?demo=1`
 7. (Cuando haya Client ID) sacar modo prueba y entrar con Google
 
-## Cotización real desde la web (GitHub token)
+## Respaldo con GitHub token (opcional)
 
-El webhook de Cursor **no acepta** `fetch` desde `leocabrales.github.io` (CORS). Para cotizar de verdad:
+No hace falta para cotizar. Usalo solo si `submit.json` no está publicado o el POST público falla.
 
 1. En GitHub → Settings → Developer settings → Fine-grained tokens → Generate.
 2. Repo access: only `leocabrales/zharo-app`. Permission: **Contents: Read and write** (required for `repository_dispatch`). Optional: Actions Read and write.
 3. Pegá el token en Configuración → **GitHub token** y guardá.
-4. Cargá un cliente → Enviar a cotizar. Eso dispara GitHub Actions → webhook → scripts Columbia/Galicia/CreditCar → JSON en `status/`.
+4. Cargá un cliente → Enviar a cotizar. Si el envío público no salió, eso dispara GitHub Actions → webhook → scripts Columbia/Galicia/CreditCar → JSON en `status/`.

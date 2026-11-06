@@ -96,7 +96,27 @@ async function zharoSubmitCase(data, user) {
 
   let remote = { ok: false, skipped: true, reason: "sin_envio" };
 
-  // 1) GitHub Actions relay (CORS OK desde github.io). Dispara los scripts vía webhook en el runner.
+  // 1) Envío público, sin token. {statusBase}/submit.json → { url, content_type }.
+  // raw.githubusercontent.com cachea ~5 min: el query t= evita un 404 viejo.
+  // El POST va como text/plain: el mismo JSON, sin preflight. No mandar application/json.
+  const pub = await zharoPublicSubmitTarget(cfg.statusBaseUrl);
+  if (pub.url) {
+    try {
+      const r = await fetch(pub.url, {
+        method: "POST",
+        headers: { "Content-Type": pub.contentType },
+        body: JSON.stringify(payload),
+        mode: "cors",
+        redirect: "follow",
+      });
+      remote = { ok: r.ok, status: r.status, skipped: false, via: "public" };
+      if (remote.ok) return { saved, payload, remote, text, caseId };
+    } catch (e) {
+      remote = { ok: false, skipped: false, error: String(e && e.message || e), via: "public" };
+    }
+  }
+
+  // 2) Respaldo: GitHub Actions (repository_dispatch). Solo si el público no está o falló.
   if (cfg.githubToken) {
     try {
       const repo = cfg.githubRepo || "leocabrales/zharo-app";
@@ -119,7 +139,7 @@ async function zharoSubmitCase(data, user) {
     }
   }
 
-  // 2) Webhook directo (falla CORS desde github.io hacia api2.cursor.sh; útil desde otros orígenes).
+  // 3) Respaldo: webhook directo (CORS suele fallar desde github.io hacia api2.cursor.sh).
   if (cfg.webhookUrl) {
     try {
       const headers = { "Content-Type": "application/json" };
@@ -136,4 +156,42 @@ async function zharoSubmitCase(data, user) {
     }
   }
   return { saved, payload, remote, text, caseId };
+}
+
+function zharoHttpsUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" || !u.hostname) return "";
+    return raw;
+  } catch {
+    return "";
+  }
+}
+
+// text/plain no dispara preflight. application/json sí, y este endpoint no lo responde.
+function zharoPublicContentType(value) {
+  const raw = String(value || "").trim();
+  if (!raw || /^text\/plain\b/i.test(raw) || /^application\/json\b/i.test(raw)) {
+    return "text/plain;charset=UTF-8";
+  }
+  return raw;
+}
+
+async function zharoPublicSubmitTarget(statusBase) {
+  const base = String(statusBase || "").trim().replace(/\/$/, "");
+  if (!base) return { url: "", contentType: "" };
+  const desc = base + "/submit.json?t=" + Date.now();
+  try {
+    const r = await fetch(desc, { cache: "no-store", mode: "cors" });
+    if (!r.ok) return { url: "", contentType: "" };
+    const data = await r.json();
+    const url = data && typeof data.url === "string" ? zharoHttpsUrl(data.url) : "";
+    if (!url) return { url: "", contentType: "" };
+    return { url, contentType: zharoPublicContentType(data.content_type) };
+  } catch (e) {
+    console.warn("submit.json", e && e.message ? e.message : e);
+    return { url: "", contentType: "" };
+  }
 }
