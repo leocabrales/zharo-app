@@ -1,28 +1,28 @@
 {
   "case_id": "a0b1e73e-6b5c-4ee3-a9cc-762192124ae0",
-  "updated_at": "2026-11-06T14:47:04-03:00",
-  "status": "cotizando",
+  "updated_at": "2026-11-06T14:53:35-03:00",
+  "status": "listo",
   "channels": {
     "columbia": {
-      "state": "esperando",
-      "neto": null,
-      "pdf_url": null,
+      "state": "pre_aprobado",
+      "neto": 12000000,
+      "pdf_url": "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status/pdf/a0b1e73e-6b5c-4ee3-a9cc-762192124ae0_columbia.pdf",
       "message": null,
-      "updated_at": null
+      "updated_at": "2026-11-06T14:53:35-03:00"
     },
     "galicia": {
-      "state": "esperando",
-      "neto": null,
-      "pdf_url": null,
-      "message": null,
-      "updated_at": null
+      "state": "pre_aprobado",
+      "neto": 11205600,
+      "pdf_url": "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status/pdf/a0b1e73e-6b5c-4ee3-a9cc-762192124ae0_galicia.pdf",
+      "message": "El neto pedido supera el máximo del canal a 24 meses. se cotizó el máximo.",
+      "updated_at": "2026-11-06T14:53:35-03:00"
     },
     "creditcar": {
-      "state": "esperando",
-      "neto": null,
-      "pdf_url": null,
-      "message": null,
-      "updated_at": null
+      "state": "pre_aprobado",
+      "neto": 9936000,
+      "pdf_url": "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status/pdf/a0b1e73e-6b5c-4ee3-a9cc-762192124ae0_creditcar.pdf",
+      "message": "El neto pedido supera el máximo del canal. se cotizó el máximo.",
+      "updated_at": "2026-11-06T14:53:35-03:00"
     }
   }
 }
