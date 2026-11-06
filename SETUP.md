@@ -52,6 +52,8 @@ La web no llama al webhook de Cursor directo (CORS desde GitHub Pages). El camin
 
 Sin secretos, sin PAT, sin key, sin el id real commiteado en otro lado. La página lo lee por la API de GitHub (el `?t=` no salta el cache de `raw.githubusercontent.com`, que retiene el archivo ~5 minutos). El POST manda el mismo JSON del caso, con `Content-Type: text/plain;charset=UTF-8` (no `application/json`: eso dispara un preflight y este endpoint no lo responde). Si falta `content_type`, igual se manda `text/plain`. Un HTTP 2xx cuenta como enviado. El contrato sigue siendo `url` + `content_type`; un campo extra no rompe el envío.
 
+La cotización en vivo usa ese mismo `url` con `GET ?action=status&id=<case_id>` (JSONP, `callback` y `t=`, sin token). No polea raw / Pages / jsDelivr para el JSON del caso: ese cache se queda con el primer resultado parcial. Si el endpoint falla o dice que el caso no está, el respaldo es la API de GitHub y no vuelve al CDN.
+
 Publicá `status/<case_id>.json` después de cada banco, con los otros en `esperando` y `status: "cotizando"` hasta que estén los tres. Recién ahí `status: "listo"`. Detalle en `status/README.md`.
 
 2. Token de GitHub y webhook URL/key son **respaldo**, solo si `submit.json` no está o ese POST falla. Si los pegás, quedan en `localStorage` de ese navegador, nunca en el repo.
