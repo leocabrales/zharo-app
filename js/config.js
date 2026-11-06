@@ -20,8 +20,15 @@ const ZharoConfig = (() => {
   let gasExec = { base: "", url: "", fetchedAt: 0 };
   let gasExecPromise = null;
 
+  const DEFAULT_GOOGLE_CLIENT_ID = "508282059589-ukbshtuf8u7jck1nto5ir4olrsqbrc6n.apps.googleusercontent.com";
+
   function get(k, def = "") {
-    try { return localStorage.getItem(KEYS[k] || k) ?? def; } catch { return def; }
+    try {
+      const stored = localStorage.getItem(KEYS[k] || k);
+      if (stored) return stored;
+    } catch {}
+    if (k === "googleClientId") return def || DEFAULT_GOOGLE_CLIENT_ID;
+    return def;
   }
   function set(k, v) {
     try {
