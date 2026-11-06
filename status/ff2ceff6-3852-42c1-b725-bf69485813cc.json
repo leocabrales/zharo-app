@@ -1,7 +1,7 @@
 {
   "case_id": "ff2ceff6-3852-42c1-b725-bf69485813cc",
-  "updated_at": "2026-11-06T17:52:18-03:00",
-  "status": "cotizando",
+  "updated_at": "2026-11-06T17:52:24-03:00",
+  "status": "listo",
   "channels": {
     "columbia": {
       "state": "sin_oferta",
