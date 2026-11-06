@@ -216,6 +216,28 @@ const ZharoConfig = (() => {
     return null;
   }
 
+  // A fetch that followed the 302 can still come back as callback({...}).
+  function parseGasText(text) {
+    const raw = String(text || "").replace(/^\uFEFF/, "").trim();
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (_) {}
+    const wrapped = raw.match(/^[A-Za-z_$][\w$]*\(([\s\S]*)\)\s*;?$/);
+    if (!wrapped) return null;
+    try { return JSON.parse(wrapped[1]); } catch (_) { return null; }
+  }
+
+  function gasStatusUrl(exec, caseId, extra) {
+    const u = new URL(exec);
+    u.searchParams.set("action", "status");
+    u.searchParams.set("id", caseId);
+    if (extra) {
+      for (const key of Object.keys(extra)) u.searchParams.set(key, extra[key]);
+    }
+    // This endpoint caches on the full URL. A repeated t= keeps the previous body.
+    u.searchParams.set("t", String(Date.now()));
+    return u.toString();
+  }
+
   // submit.json names the Apps Script. Prefer the Contents API; a direct read is only
   // how we learn that URL when the API budget is spent. Case JSON never uses this path.
   async function readSubmitDescriptor(base) {
@@ -256,8 +278,33 @@ const ZharoConfig = (() => {
     return tracked;
   }
 
-  // Apps Script 302s to script.googleusercontent.com. fetch() often fails that hop.
-  // A script tag does not. The callback name and t= are part of the cache key.
+  // CORS on the 302 and on the final body is *. A plain GET is the live read.
+  // No custom headers: that would preflight, and this web app does not answer it.
+  async function fetchGasHttp(exec, caseId) {
+    const url = gasStatusUrl(exec, caseId);
+    const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), GAS_JSONP_TIMEOUT_MS) : 0;
+    if (timer && typeof timer.unref === "function") timer.unref();
+    try {
+      const r = await fetch(url, {
+        method: "GET",
+        cache: "no-store",
+        mode: "cors",
+        credentials: "omit",
+        redirect: "follow",
+        signal: ctrl ? ctrl.signal : undefined,
+      });
+      if (!r.ok) return null;
+      return classifyGas(parseGasText(await r.text()));
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  // Fallback when the browser will not expose the redirected body to fetch().
+  // Do not reject on load or error: the 302 to script.googleusercontent.com can
+  // fire those events before callback() runs, and rejecting here replaces the
+  // callback with a no-op so a finished quote never gets painted.
   function jsonpStatus(exec, caseId) {
     return new Promise((resolve, reject) => {
       if (typeof document === "undefined" || !document.head || typeof document.createElement !== "function") {
@@ -294,40 +341,37 @@ const ZharoConfig = (() => {
         if (drop && typeof drop.unref === "function") drop.unref();
         fn();
       };
-      let got = false;
-      window[cb] = (data) => {
-        got = true;
-        finish(() => resolve(data));
-      };
+      window[cb] = (data) => finish(() => resolve(data));
       timer = setTimeout(() => finish(() => reject(new Error("jsonp timeout"))), GAS_JSONP_TIMEOUT_MS);
-      // A load that never called the callback is not JSONP (raw JSON, HTML error).
-      // Fail immediately so the Contents API fallback is not stuck behind the timeout.
-      script.onload = () => { if (!got) finish(() => reject(new Error("jsonp empty"))); };
-      script.onerror = () => finish(() => reject(new Error("jsonp error")));
       script.async = true;
-      script.charset = "utf-8";
       script.src = src;
       document.head.appendChild(script);
     });
   }
 
+  async function readGas(exec, caseId) {
+    let http = null;
+    try { http = await fetchGasHttp(exec, caseId); } catch (_) { http = null; }
+    if (http && ((http.ok && http.json) || http.missing)) return http;
+    try {
+      const viaJsonp = classifyGas(await jsonpStatus(exec, caseId));
+      if (viaJsonp && ((viaJsonp.ok && viaJsonp.json) || viaJsonp.missing)) return viaJsonp;
+    } catch (_) {}
+    return null;
+  }
+
   async function fetchGasCase(caseId) {
     const exec = await gasExecUrl(false);
     if (!exec) return null;
-    try {
-      return classifyGas(await jsonpStatus(exec, caseId));
-    } catch (_) {
-      const refreshed = await gasExecUrl(true);
-      if (!refreshed || refreshed === exec) return null;
-      try {
-        return classifyGas(await jsonpStatus(refreshed, caseId));
-      } catch (_) {
-        return null;
-      }
-    }
+    const first = await readGas(exec, caseId);
+    if (first) return first;
+    const refreshed = await gasExecUrl(true);
+    if (!refreshed || refreshed === exec) return null;
+    return readGas(refreshed, caseId);
   }
 
-  // Case status: Apps Script JSONP, then the Contents API. Never raw / Pages / jsDelivr.
+  // Case status: cache-busted Apps Script GET, then JSONP, then the Contents API.
+  // Never raw / Pages / jsDelivr.
   // Those CDNs ignore ?t= and can keep serving the first partial snapshot for minutes.
   // Any other https base is fetched as-is so a custom statusBaseUrl still wins.
   async function fetchLiveJson(url) {

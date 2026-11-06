@@ -26,7 +26,15 @@ The quote page, and any other call that reads a case id through the live fetch, 
 
 1. `status/submit.json` supplies `url`. That is the same Apps Script web app used to submit a case. The page does not hardcode it. The Contents API is preferred for this one descriptor. A direct read of `submit.json` is only how the page learns the exec URL when that API does not answer. The exec URL changes rarely, so a cached descriptor is not a stale quote.
 
-2. Live poll. Apps Script often responds `302` to `script.googleusercontent.com`, and `fetch()` CORS fails on that hop. JSONP is the read that works. The callback name is unique and `t=` is the current time. This endpoint caches on the full URL, so those params are a real cache bust. Raw, Pages, and jsDelivr are not.
+2. Live poll. Every request sends a fresh `t=`. This endpoint caches on the full URL; without a new `t=` it can keep returning the previous body. Raw, Pages, and jsDelivr are not this poll.
+
+The first try is a CORS GET. The 302 to `script.googleusercontent.com` and the final body both send `Access-Control-Allow-Origin: *`, and the request has no custom headers so it does not preflight:
+
+```
+GET {submit.url}?action=status&id={case_id}&t={timestamp}
+```
+
+If that fetch fails, the page loads the same URL as a script with a unique `callback`. The callback name also changes the URL. Do not treat the script's `load` or `error` event as a failed read: that 302 can fire them before `callback({...})` runs, and dropping the callback leaves the quote on "Esperando oferta" once the GitHub API budget is spent.
 
 ```
 GET {submit.url}?action=status&id={case_id}&callback={uniqueName}&t={timestamp}
