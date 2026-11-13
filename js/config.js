@@ -118,7 +118,8 @@ const ZharoConfig = (() => {
     const name = String(file || "");
     if (!/\.json$/i.test(name)) return "";
     const lower = name.toLowerCase();
-    if (lower === "submit.json" || lower === "casos_feed.json") return "";
+    if (lower === "submit.json" || lower === "casos_feed.json" || lower === "casos_feed_admin.json") return "";
+    if (lower.startsWith("f_") || lower.startsWith("feed_")) return "";
     const id = name.slice(0, -".json".length);
     if (!id || id.length > 80) return "";
     if (!/^[A-Za-z0-9._~-]+$/.test(id)) return "";
@@ -408,6 +409,6 @@ const ZharoConfig = (() => {
   return {
     KEYS, get: (k, d) => (k === "statusBaseUrl" ? statusBase() : get(k, d)),
     set, isDev, all, DEFAULT_STATUS_BASE, GITHUB_REPO,
-    parseGithubStatus, fetchLiveJson,
+    parseGithubStatus, fetchLiveJson, gasExecUrl,
   };
 })();

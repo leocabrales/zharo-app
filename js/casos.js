@@ -2,6 +2,63 @@
 const ZharoCasos = (() => {
   const KEY = "zharo_casos_v1";
   const CHANNEL_IDS = ["columbia", "galicia", "creditcar", "nacion"];
+  const ORPHAN_KEY = KEY + ":_orphan";
+
+  function normEmail(email) {
+    return String(email || "").trim().toLowerCase();
+  }
+
+  function currentEmail() {
+    try {
+      const u = JSON.parse(localStorage.getItem((typeof ZharoConfig !== "undefined" && ZharoConfig.KEYS && ZharoConfig.KEYS.user) || "zharo_user") || "null");
+      return normEmail(u && u.email);
+    } catch { return ""; }
+  }
+
+  function keyFor(email) {
+    const e = normEmail(email);
+    return e ? KEY + ":" + e : KEY;
+  }
+
+  function readKey(k) {
+    try { return JSON.parse(localStorage.getItem(k) || "[]"); } catch { return []; }
+  }
+
+  function writeKey(k, arr) {
+    localStorage.setItem(k, JSON.stringify((arr || []).slice(0, 100)));
+  }
+
+  function mergeById(into, extra) {
+    const map = new Map();
+    for (const c of into || []) if (c && c.id) map.set(c.id, c);
+    for (const c of extra || []) {
+      if (!c || !c.id) continue;
+      const prev = map.get(c.id);
+      map.set(c.id, prev ? { ...prev, ...c } : c);
+    }
+    return Array.from(map.values());
+  }
+
+  function migrateLegacy(email) {
+    const legacy = readKey(KEY);
+    if (!Array.isArray(legacy) || !legacy.length) return;
+    const buckets = {};
+    const orphan = [];
+    for (const c of legacy) {
+      const e = normEmail(c && c.email);
+      if (e) {
+        (buckets[e] ||= []).push(c);
+      } else {
+        orphan.push(c);
+      }
+    }
+    for (const [e, arr] of Object.entries(buckets)) {
+      writeKey(keyFor(e), mergeById(readKey(keyFor(e)), arr));
+    }
+    if (orphan.length) writeKey(ORPHAN_KEY, mergeById(readKey(ORPHAN_KEY), orphan));
+    localStorage.removeItem(KEY);
+  }
+
   const CHANNEL_LABEL = { columbia: "Columbia", galicia: "Galicia", creditcar: "CreditCar" , nacion: "Nación" };
   const REPEAT_THRESHOLD = 3;
 
@@ -18,11 +75,18 @@ const ZharoCasos = (() => {
     return o;
   }
 
-  function list() {
-    try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; }
+  function list(email) {
+    const e = normEmail(email === undefined ? currentEmail() : email);
+    migrateLegacy(e);
+    const mine = e ? readKey(keyFor(e)) : [];
+    // Casos viejos sin email: solo el admin los ve en este dispositivo.
+    const admin = (typeof ZharoAuth !== "undefined" && ZharoAuth.isAdmin) ? ZharoAuth.isAdmin(e) : false;
+    return admin ? mergeById(mine, readKey(ORPHAN_KEY)) : mine;
   }
-  function save(arr) {
-    localStorage.setItem(KEY, JSON.stringify(arr.slice(0, 100)));
+  function save(arr, email) {
+    const e = normEmail(email === undefined ? currentEmail() : email);
+    migrateLegacy(e);
+    writeKey(e ? keyFor(e) : KEY, (arr || []).slice(0, 100));
     try {
       const bc = new BroadcastChannel("zharo_casos");
       bc.postMessage({ type: "casos_updated" });
@@ -33,16 +97,20 @@ const ZharoCasos = (() => {
     return list().find((c) => c.id === id) || null;
   }
   function add(caso) {
-    const arr = list();
+    const email = normEmail(caso.email || currentEmail());
+    const arr = readKey(email ? keyFor(email) : KEY);
     const row = {
       ...caso,
+      email: email || caso.email || "",
       id: caso.id || uuid(),
       createdAt: caso.createdAt || new Date().toISOString(),
       status: caso.status || "cotizando",
       channels: (caso.channels && typeof caso.channels === "object") ? caso.channels : emptyChannels(),
     };
+    const prev = arr.findIndex((c) => c.id === row.id);
+    if (prev >= 0) arr.splice(prev, 1);
     arr.unshift(row);
-    save(arr);
+    save(arr, email);
     try {
       const bc = new BroadcastChannel("zharo_casos");
       bc.postMessage({ type: "case", id: row.id });
@@ -51,46 +119,122 @@ const ZharoCasos = (() => {
     return arr[0];
   }
   function update(id, patch) {
-    const arr = list();
-    const i = arr.findIndex((c) => c.id === id);
-    if (i < 0) return null;
-    arr[i] = { ...arr[i], ...patch, updatedAt: new Date().toISOString() };
-    save(arr);
-    try {
-      const bc = new BroadcastChannel("zharo_casos");
-      bc.postMessage({ type: "case", id });
-      bc.close();
-    } catch {}
-    return arr[i];
+    const email = currentEmail();
+    const candidates = [];
+    if (email) candidates.push({ key: keyFor(email), email });
+    if (typeof ZharoAuth !== "undefined" && ZharoAuth.isAdmin && ZharoAuth.isAdmin(email)) {
+      candidates.push({ key: ORPHAN_KEY, email: null });
+    }
+    candidates.push({ key: KEY, email: "" });
+    for (const cand of candidates) {
+      const arr = readKey(cand.key);
+      const i = arr.findIndex((c) => c.id === id);
+      if (i < 0) continue;
+      arr[i] = { ...arr[i], ...patch, updatedAt: new Date().toISOString() };
+      if (cand.email == null) writeKey(cand.key, arr);
+      else save(arr, cand.email);
+      try {
+        const bc = new BroadcastChannel("zharo_casos");
+        bc.postMessage({ type: "case", id });
+        bc.close();
+      } catch {}
+      return arr[i];
+    }
+    return null;
   }
   function mine(email) {
-    const e = String(email || "").toLowerCase();
-    return list().filter((c) => !e || String(c.email || "").toLowerCase() === e);
+    return list(email);
   }
 
-  function feedUrl() {
+  function statusBase() {
     const base = (typeof ZharoConfig !== "undefined" && ZharoConfig.get)
       ? ZharoConfig.get("statusBaseUrl")
       : "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status";
-    return String(base).replace(/\/$/, "") + "/casos_feed.json";
+    return String(base).replace(/\/$/, "");
   }
 
-  async function fetchFeed() {
-    const url = feedUrl();
+  function feedUrl() {
+    return statusBase() + "/casos_feed.json";
+  }
+
+  function adminFeedUrl() {
+    return statusBase() + "/casos_feed_admin.json";
+  }
+
+  function idToken() {
     try {
-      const got = (typeof ZharoConfig !== "undefined" && ZharoConfig.fetchLiveJson)
-        ? await ZharoConfig.fetchLiveJson(url)
-        : { ok: false };
-      if (!got.ok || !got.json) {
-        return { casos: [], updated_at: null, count: 0, error: got.missing ? "404" : "fetch", notModified: false };
+      const u = (typeof ZharoAuth !== "undefined" && ZharoAuth.currentUser) ? ZharoAuth.currentUser() : null;
+      if (!u || !u.id_token) return "";
+      if (u.exp && (Number(u.exp) * 1000) < Date.now() + 15000) return "";
+      return u.id_token;
+    } catch { return ""; }
+  }
+
+  async function fetchGasFeed() {
+    const token = idToken();
+    if (!token || typeof ZharoConfig === "undefined" || !ZharoConfig.fetchLiveJson) return null;
+    try {
+      const exec = await (ZharoConfig.gasExecUrl ? ZharoConfig.gasExecUrl(false) : "");
+      if (!exec) return null;
+      const u = new URL(exec);
+      u.searchParams.set("action", "casos_feed");
+      u.searchParams.set("id_token", token);
+      u.searchParams.set("t", String(Date.now()));
+      const r = await fetch(u.toString(), { method: "GET", cache: "no-store", mode: "cors", credentials: "omit", redirect: "follow" });
+      if (!r.ok) return null;
+      const data = await r.json();
+      if (!data || data.ok !== true || data.scoped !== true || !Array.isArray(data.casos)) return null;
+      return data;
+    } catch { return null; }
+  }
+
+  async function fetchJsonFeed(url) {
+    const got = (typeof ZharoConfig !== "undefined" && ZharoConfig.fetchLiveJson)
+      ? await ZharoConfig.fetchLiveJson(url)
+      : { ok: false };
+    if (!got.ok || !got.json) {
+      return { casos: [], updated_at: null, count: 0, error: got.missing ? "404" : "fetch", notModified: !!got.notModified };
+    }
+    const data = got.json;
+    const casos = Array.isArray(data.casos) ? data.casos : [];
+    return {
+      casos,
+      updated_at: data.updated_at || null,
+      count: data.count || casos.length,
+      notModified: !!got.notModified,
+      privacy: data.privacy || "",
+    };
+  }
+
+  async function fetchFeed(user) {
+    const email = normEmail((user && user.email) || currentEmail());
+    const admin = (typeof ZharoAuth !== "undefined" && ZharoAuth.isAdmin) ? ZharoAuth.isAdmin(email) : false;
+    try {
+      const gas = await fetchGasFeed();
+      if (gas) {
+        return {
+          casos: gas.casos,
+          updated_at: gas.updated_at || null,
+          count: gas.count || gas.casos.length,
+          notModified: false,
+          via: "gas",
+        };
       }
-      const data = got.json;
-      const casos = Array.isArray(data.casos) ? data.casos : [];
+      if (admin) {
+        const feed = await fetchJsonFeed(adminFeedUrl());
+        feed.via = feed.error ? "admin-error" : "admin";
+        return feed;
+      }
+      // Comercial: el JSON público ya no lista consultas (privacidad).
+      // Hasta que el GAS con scoped=true esté redeployed, el listado sale de este dispositivo.
+      const stub = await fetchJsonFeed(feedUrl());
       return {
-        casos,
-        updated_at: data.updated_at || null,
-        count: data.count || casos.length,
-        notModified: !!got.notModified,
+        casos: [],
+        updated_at: stub.updated_at || null,
+        count: 0,
+        notModified: stub.notModified,
+        via: "local",
+        error: stub.error,
       };
     } catch (e) {
       console.warn("casos_feed", e);
@@ -138,12 +282,13 @@ const ZharoCasos = (() => {
   }
 
   function channelResultFromLocal(ch) {
-    if (!ch || typeof ch !== "object") return { resultado: null, neto: null, plazos: null };
+    if (!ch || typeof ch !== "object") return { resultado: null, neto: null, plazos: null, pdf_url: null };
     const state = ch.state || ch.resultado || "esperando";
     return {
       resultado: normResultado(state),
       neto: ch.neto ?? null,
       plazos: ch.plazos ?? null,
+      pdf_url: ch.pdf_url || null,
     };
   }
 
@@ -182,6 +327,7 @@ const ZharoCasos = (() => {
         resultado: ch.resultado ? normResultado(ch.resultado) : null,
         neto: ch.neto ?? null,
         plazos: ch.plazos ?? null,
+        pdf_url: ch.pdf_url || null,
       };
     }
     const isWeb = c.source === "web" || /^[0-9a-f-]{36}$/i.test(c.id || "");
@@ -413,7 +559,8 @@ const ZharoCasos = (() => {
     if (r === "pre_aprobado") return "ok";
     if (r === "sujeto_analisis") return "review";
     if (r === "error" || r === "dni_no_coincide") return "err";
-    if (r === "sin_oferta" || r === "sin_consultar" || r === "no_cotizado") return "no";
+    if (r === "sin_oferta" || r === "no_cotizado") return "no";
+    if (r === "sin_consultar" || r === "no_consultado") return "void";
     return "wait";
   }
 
@@ -425,6 +572,7 @@ const ZharoCasos = (() => {
     list, add, get, update, mine, emptyChannels, CHANNEL_IDS, CHANNEL_LABEL,
     REPEAT_THRESHOLD, fetchFeed, mergeCases, applyFilters, computeStats,
     repeatAlerts, uniqueValues, overallStatus, fmtMoney, fmtWhen, clientLabel,
-    pillClass, pillLabel, stateLabel, normResultado, feedUrl,
+    pillClass, pillLabel, stateLabel, normResultado, feedUrl, adminFeedUrl,
+    keyFor, currentEmail, normEmail,
   };
 })();

@@ -8,7 +8,10 @@ const ZharoAuth = (() => {
     try {
       allow = await (await fetch(ALLOW_URL + "?v=" + Date.now())).json();
     } catch {
-      allow = { emails: ["leonel.cabrales91@gmail.com"], domains: [] };
+      allow = { emails: ["leonel.cabrales91@gmail.com"], domains: [], admins: ["leonel.cabrales91@gmail.com", "lcabrales@zaro.ar"] };
+    }
+    if (!Array.isArray(allow.admins) || !allow.admins.length) {
+      allow.admins = ["leonel.cabrales91@gmail.com", "lcabrales@zaro.ar"];
     }
     ready = true;
     return allow;
@@ -26,6 +29,13 @@ const ZharoAuth = (() => {
     const domains = (allow.domains || []).map(d => String(d).replace(/^@/, "").toLowerCase());
     const domain = e.split("@")[1] || "";
     return domains.includes(domain);
+  }
+
+  function isAdmin(email) {
+    const e = normEmail(email || (currentUser() || {}).email);
+    if (!e) return false;
+    const list = (allow.admins || ["leonel.cabrales91@gmail.com", "lcabrales@zaro.ar"]).map(normEmail);
+    return list.includes(e);
   }
 
   function currentUser() {
@@ -92,7 +102,10 @@ const ZharoAuth = (() => {
       name: data.name || data.email,
       picture: data.picture || "",
       provider: "google",
+      sub: data.sub || "",
       at: Date.now(),
+      exp: data.exp || null,
+      id_token: response.credential || "",
     });
     const q = new URLSearchParams(location.search);
     const next = q.get("next") || "cargar.html";
@@ -135,5 +148,5 @@ const ZharoAuth = (() => {
     });
   }
 
-  return { loadAllow, isAllowed, currentUser, saveUser, logout, requireAuth, enterDev, initGoogleButton, onCredential };
+  return { loadAllow, isAllowed, isAdmin, normEmail, currentUser, saveUser, logout, requireAuth, enterDev, initGoogleButton, onCredential };
 })();
