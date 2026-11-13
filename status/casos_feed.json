@@ -1,7 +1,40 @@
 {
-  "updated_at": "2026-11-13T16:14:40-03:00",
-  "count": 15,
+  "updated_at": "2026-11-13T16:24:03-03:00",
+  "count": 17,
   "casos": [
+    {
+      "id": "f0360e59-5787-4526-8c48-2ff16e8609f6",
+      "fecha_hora": "2026-11-13 19:14:43",
+      "comercial": "Agustin Ortega",
+      "agencia": "Aspen",
+      "vehiculo": "FIAT CRONOS 1.3 DRIVE GSE 2020",
+      "neto_pedido": null,
+      "plazos": "24",
+      "dni_tail": "764",
+      "source": "web",
+      "channels": {
+        "columbia": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        },
+        "galicia": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        },
+        "creditcar": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        },
+        "nacion": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        }
+      }
+    },
     {
       "id": "csv_0d03d2d10c66a443",
       "fecha_hora": "2026-11-13 18:31",
@@ -30,6 +63,39 @@
         },
         "nacion": {
           "resultado": null,
+          "neto": null,
+          "plazos": null
+        }
+      }
+    },
+    {
+      "id": "d2d941dc-1787-4775-a39f-6353f91bbb7f",
+      "fecha_hora": "2026-11-13 16:22",
+      "comercial": "Agustin Ortega",
+      "agencia": "Coll automotores",
+      "vehiculo": "PEUGEOT 208 1.6 5P FELINE PK CUIR 2015",
+      "neto_pedido": "máximo",
+      "plazos": null,
+      "dni_tail": "957",
+      "source": "web",
+      "channels": {
+        "columbia": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        },
+        "galicia": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        },
+        "creditcar": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        },
+        "nacion": {
+          "resultado": "sin_oferta",
           "neto": null,
           "plazos": null
         }
