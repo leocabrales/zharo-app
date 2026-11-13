@@ -1,6 +1,6 @@
 {
   "case_id": "9113143a-4a2b-41cb-b5a5-ac3ecc228c91",
-  "updated_at": "2026-11-13T15:31:30-03:00",
+  "updated_at": "2026-11-13T15:31:34-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
@@ -25,11 +25,12 @@
       "updated_at": "2026-11-13T15:31:30-03:00"
     },
     "nacion": {
-      "state": "esperando",
+      "state": "sin_consultar",
       "neto": null,
       "pdf_url": null,
-      "message": null,
-      "updated_at": null
+      "message": "Nación: sin consultar (no se obtuvo el CUIT del cliente).",
+      "updated_at": "2026-11-13T15:31:34-03:00",
+      "options": null
     }
   }
 }
