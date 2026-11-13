@@ -1,6 +1,6 @@
 {
   "case_id": "f0360e59-5787-4526-8c48-2ff16e8609f6",
-  "updated_at": "2026-11-13T16:14:21-03:00",
+  "updated_at": "2026-11-13T16:14:25-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
@@ -18,11 +18,11 @@
       "updated_at": "2026-11-13T16:14:21-03:00"
     },
     "creditcar": {
-      "state": "esperando",
+      "state": "sin_oferta",
       "neto": null,
       "pdf_url": null,
-      "message": null,
-      "updated_at": null
+      "message": "El DNI no corresponde a la persona declarada. Revisalo por favor.",
+      "updated_at": "2026-11-13T16:14:25-03:00"
     },
     "nacion": {
       "state": "esperando",
