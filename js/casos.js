@@ -206,6 +206,11 @@ const ZharoCasos = (() => {
     };
   }
 
+  function isStoppedCase(c) {
+    const raw = c._raw || {};
+    return !!(c.case_state || raw.case_state || raw.status === "detenido" || c.status === "detenido");
+  }
+
   function mergeCases(localArr, feedArr) {
     const map = new Map();
     for (const f of feedArr) {
@@ -239,7 +244,8 @@ const ZharoCasos = (() => {
         origin: "local+feed",
       });
     }
-    return Array.from(map.values()).sort((a, b) => {
+    // DNI que no coincide (caso detenido) no es un caso: no aparece en Mis consultas.
+    return Array.from(map.values()).filter((c) => !isStoppedCase(c)).sort((a, b) => {
       const ta = Date.parse(a.fecha_hora) || 0;
       const tb = Date.parse(b.fecha_hora) || 0;
       return tb - ta;
@@ -321,13 +327,10 @@ const ZharoCasos = (() => {
       }
       perCanal[id] = { ok, n, pct: n ? Math.round((ok / n) * 100) : null };
     }
-    let overallOk = 0, stopped = 0;
+    let overallOk = 0;
     for (const c of casos) {
-      const ov = overallStatus(c);
-      if (ov === "pre_aprobado") overallOk++;
-      if (ov === "dni_no_coincide") stopped++;
+      if (overallStatus(c) === "pre_aprobado") overallOk++;
     }
-    const cotizados = total - stopped;       // un caso frenado no se cotizó: fuera de la aprobación
     const agCount = {};
     for (const c of casos) {
       const a = c.agencia || "—";
@@ -340,9 +343,7 @@ const ZharoCasos = (() => {
 
     return {
       total,
-      aprobPct: cotizados ? Math.round((overallOk / cotizados) * 100) : 0,
-      cotizados,
-      dniNoCoincide: stopped,
+      aprobPct: total ? Math.round((overallOk / total) * 100) : 0,
       aprobCount: overallOk,
       perCanal,
       topAgencias,
@@ -403,7 +404,6 @@ const ZharoCasos = (() => {
     if (res === "sin_oferta") return r === "sin_oferta";
     if (res === "error") return r === "error";
     if (res === "sin_consultar") return r === "sin_consultar";
-    if (res === "dni_no_coincide") return r === "dni_no_coincide";
     if (res === "pendiente" || res === "cotizando") return r === "pendiente";
     return true;
   }

@@ -526,7 +526,7 @@
         history.replaceState(null, "", "simulando.html?id=" + encodeURIComponent(caso.id) + "&demo=1");
       } else {
         $("clientName").textContent = "Caso no encontrado";
-        $("clientMeta").innerHTML = `<span class="sim-chip">Volvé a Mis casos e ingresá de nuevo</span>`;
+        $("clientMeta").innerHTML = `<span class="sim-chip">Volvé a Mis consultas e ingresá de nuevo</span>`;
         $("channels").innerHTML = `<p class="muted" style="padding:16px;color:#fff">No hay un caso con este id en este dispositivo. Si cotizaste acá, no borres el almacenamiento del sitio.</p>`;
         return;
       }

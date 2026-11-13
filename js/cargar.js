@@ -235,7 +235,7 @@ function readForm() {
 }
 
 function showSendError(out) {
-  const msg = "No se pudo enviar el caso a cotizar. No se muestran ofertas porque la consulta no salió. Reintentá desde acá. En Mis casos queda en espera.";
+  const msg = "No se pudo enviar el caso a cotizar. No se muestran ofertas porque la consulta no salió. Reintentá desde acá. En Mis consultas queda en espera.";
   out.classList.remove("hidden");
   out.innerHTML = `<div class="banner err" role="alert">${msg}</div>`;
   out.scrollIntoView({ behavior: "smooth", block: "nearest" });

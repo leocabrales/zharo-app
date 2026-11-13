@@ -1,41 +1,7 @@
 {
-  "updated_at": "2026-11-13T16:26:41-03:00",
-  "count": 18,
+  "updated_at": "2026-11-13T16:32:59-03:00",
+  "count": 17,
   "casos": [
-    {
-      "id": "f0360e59-5787-4526-8c48-2ff16e8609f6",
-      "fecha_hora": "2026-11-13 19:14:43",
-      "comercial": "Agustin Ortega",
-      "agencia": "Aspen",
-      "vehiculo": "FIAT CRONOS 1.3 DRIVE GSE 2020",
-      "neto_pedido": null,
-      "plazos": "24",
-      "dni_tail": "764",
-      "source": "web",
-      "channels": {
-        "columbia": {
-          "resultado": "no_cotizado",
-          "neto": null,
-          "plazos": null
-        },
-        "galicia": {
-          "resultado": "no_cotizado",
-          "neto": null,
-          "plazos": null
-        },
-        "creditcar": {
-          "resultado": "no_cotizado",
-          "neto": null,
-          "plazos": null
-        },
-        "nacion": {
-          "resultado": "no_cotizado",
-          "neto": null,
-          "plazos": null
-        }
-      },
-      "case_state": "dni_no_coincide"
-    },
     {
       "id": "csv_0d03d2d10c66a443",
       "fecha_hora": "2026-11-13 18:31",
