@@ -117,6 +117,7 @@ const ZharoCasos = (() => {
     if (r === "sin oferta" || r === "sinoferta" || r === "no" || r === "rechazado") return "sin_oferta";
     if (r === "error" || r === "err" || r === "timeout") return "error";
     if (r === "no consultado" || r === "noconsultado") return "no_consultado";
+    if (r === "sin consultar" || r === "sinconsultar") return "sin_consultar";
     if (r === "esperando" || r === "pendiente" || r === "cotizando" || r === "enviado" || r === "wait") return "pendiente";
     return "pendiente";
   }
@@ -124,6 +125,7 @@ const ZharoCasos = (() => {
   function stateLabel(resultado) {
     const r = normResultado(resultado);
     if (r === "no_consultado") return "—";
+    if (r === "sin_consultar") return "Sin consultar";
     if (r === "pre_aprobado") return "Pre aprobado";
     if (r === "sujeto_analisis") return "Sujeto a análisis";
     if (r === "sin_oferta") return "Sin oferta";
@@ -238,7 +240,7 @@ const ZharoCasos = (() => {
   }
 
   function overallStatus(caso) {
-    const vals = CHANNEL_IDS.map((id) => (caso.channels[id] || {}).resultado).filter((v) => v && v !== "no_consultado");
+    const vals = CHANNEL_IDS.map((id) => (caso.channels[id] || {}).resultado).filter((v) => v && v !== "no_consultado" && v !== "sin_consultar");
     if (!vals.length) return "pendiente";
     if (vals.some((v) => v === "pendiente")) return "pendiente";
     if (vals.some((v) => v === "pre_aprobado")) return "pre_aprobado";
@@ -304,7 +306,7 @@ const ZharoCasos = (() => {
       let ok = 0, n = 0;
       for (const c of casos) {
         const r = (c.channels[id] || {}).resultado;
-        if (!r || r === "pendiente" || r === "no_consultado") continue;
+        if (!r || r === "pendiente" || r === "no_consultado" || r === "sin_consultar") continue;
         n++;
         if (r === "pre_aprobado") ok++;
         else if (id === "nacion" && r === "sujeto_analisis") ok++; // Nación solo da oferta preliminar
@@ -387,6 +389,7 @@ const ZharoCasos = (() => {
     if (res === "sujeto_analisis") return r === "sujeto_analisis";
     if (res === "sin_oferta") return r === "sin_oferta";
     if (res === "error") return r === "error";
+    if (res === "sin_consultar") return r === "sin_consultar";
     if (res === "pendiente" || res === "cotizando") return r === "pendiente";
     return true;
   }
@@ -396,7 +399,7 @@ const ZharoCasos = (() => {
     if (r === "pre_aprobado") return "ok";
     if (r === "sujeto_analisis") return "review";
     if (r === "error") return "err";
-    if (r === "sin_oferta") return "no";
+    if (r === "sin_oferta" || r === "sin_consultar") return "no";
     return "wait";
   }
 

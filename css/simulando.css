@@ -154,9 +154,9 @@
 @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
 .ch-result{display:none}
-.ch.is-ok .ch-result,.ch.is-analisis .ch-result,.ch.is-no .ch-result,.ch.is-err .ch-result{display:block}
-.ch.is-ok .ch-waitline,.ch.is-analisis .ch-waitline,.ch.is-no .ch-waitline,.ch.is-err .ch-waitline,
-.ch.is-ok .ch-ticker,.ch.is-analisis .ch-ticker,.ch.is-no .ch-ticker,.ch.is-err .ch-ticker{display:none}
+.ch.is-ok .ch-result,.ch.is-analisis .ch-result,.ch.is-no .ch-result,.ch.is-err .ch-result,.ch.is-skip .ch-result{display:block}
+.ch.is-ok .ch-waitline,.ch.is-analisis .ch-waitline,.ch.is-no .ch-waitline,.ch.is-err .ch-waitline,.ch.is-skip .ch-waitline,
+.ch.is-ok .ch-ticker,.ch.is-analisis .ch-ticker,.ch.is-no .ch-ticker,.ch.is-err .ch-ticker,.ch.is-skip .ch-ticker{display:none}
 
 .ch-neto{
   font-family:"JetBrains Mono",ui-monospace,monospace;
@@ -195,6 +195,8 @@
   box-shadow:0 0 0 1px rgba(251,191,36,.38), 0 18px 40px rgba(0,0,0,.35), 0 0 36px rgba(245,158,11,.14)
 }
 .ch.is-no{opacity:.92}
+.ch.is-skip{opacity:.85}
+.ch.is-skip .ch-status{color:#cbd5e1;background:rgba(51,65,85,.5);border-color:rgba(148,163,184,.35)}
 .ch.flip-in{animation:flipIn .55s cubic-bezier(.22,1,.36,1)}
 @keyframes flipIn{
   0%{transform:rotateX(12deg) scale(.97);opacity:.4;filter:brightness(1.4)}

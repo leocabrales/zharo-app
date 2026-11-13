@@ -32,7 +32,7 @@
         <select id="fltComercial"><option value="todos">Comercial: todos</option></select>
         <select id="fltFecha"><option value="todos" selected>Fecha: todas</option><option value="hoy">Hoy</option><option value="7">7 días</option><option value="30">30 días</option></select>
         <select id="fltCanal"><option value="cualquiera">Canal: cualquiera</option><option value="columbia">Columbia</option><option value="galicia">Galicia</option><option value="creditcar">CreditCar</option><option value="nacion">Nación</option></select>
-        <select id="fltRes"><option value="todos">Resultado: todos</option><option value="aprobado">Pre aprobado</option><option value="sujeto_analisis">Sujeto a análisis</option><option value="sin_oferta">Sin oferta</option><option value="error">Error temporal</option><option value="pendiente">Cotizando</option></select>
+        <select id="fltRes"><option value="todos">Resultado: todos</option><option value="aprobado">Pre aprobado</option><option value="sujeto_analisis">Sujeto a análisis</option><option value="sin_oferta">Sin oferta</option><option value="error">Error temporal</option><option value="sin_consultar">Sin consultar</option><option value="pendiente">Cotizando</option></select>
         <button type="button" class="ops-btn primary" id="fltSearch">Buscar</button><button type="button" class="ops-clear" id="fltClear">Limpiar</button>
       </div>
       <div class="ops-meta"><span class="muted" id="syncNote">Datos del bot + casos de este dispositivo.</span><span class="muted" id="listCount"></span></div>
@@ -97,6 +97,7 @@
       function detailHtml(c) {
         return ZharoCasos.CHANNEL_IDS.map(id => { const ch = c.channels[id]||{}, r = ch.resultado;
           const l = r == null ? "sin dato" : ZharoCasos.stateLabel(r);
+          if (id === "nacion" && r === "sin_consultar") return `<div class="detail-ch"><b>Nación</b>: sin consultar (no se obtuvo el CUIT del cliente)</div>`;
           const neto = (id === "nacion" && ch.neto == null) ? "" : ` · neto ${ch.neto != null ? ZharoCasos.fmtMoney(ch.neto) : "—"}`;
           return `<div class="detail-ch"><b>${ZharoCasos.CHANNEL_LABEL[id]}</b> · ${l}${neto} · plazos ${esc(ch.plazos || "—")}</div>`; }).join("");
       }

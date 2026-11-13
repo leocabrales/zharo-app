@@ -152,13 +152,15 @@
     // Casos anteriores a Nación (o canal no consultado): no se muestra la tarjeta.
     if (state === "no_consultado") return "";
     const cls =
+      state === "sin_consultar" ? "is-skip" :
       state === "sujeto_analisis" ? "is-analisis" :
       state === "pre_aprobado" ? "is-ok" :
       state === "sin_oferta" ? "is-no" :
       state === "error" ? "is-err" : "is-wait";
 
     let statusLabel = "Cotizando";
-    if (cls === "is-analisis") statusLabel = "Sujeto a análisis";
+    if (cls === "is-skip") statusLabel = "Sin consultar";
+    else if (cls === "is-analisis") statusLabel = "Sujeto a análisis";
     else if (cls === "is-ok") statusLabel = "Pre aprobado";
     else if (cls === "is-no") statusLabel = "Sin oferta";
     else if (cls === "is-err") statusLabel = "Error temporal";
@@ -173,6 +175,8 @@
         ${pdf ? `<div class="ch-actions">${pdf}</div>` : ""}
         ${copyHtml(ch, st)}
       </div>`;
+    } else if (cls === "is-skip") {
+      result = `<div class="ch-result"><div class="ch-msg">${escapeHtml(ch.name)}: sin consultar (no se obtuvo el CUIT del cliente)</div></div>`;
     } else if (cls === "is-no") {
       result = `<div class="ch-result"><div class="ch-msg">Sin oferta disponible en este canal.</div></div>`;
     } else if (cls === "is-err") {
@@ -332,6 +336,7 @@
     if (["sin oferta", "sinoferta", "no", "rechazado"].includes(v)) return "sin_oferta";
     if (["error", "err", "timeout"].includes(v)) return "error";
     if (v === "no consultado" || v === "noconsultado") return "no_consultado";
+    if (v === "sin consultar" || v === "sinconsultar") return "sin_consultar";
     if (["esperando", "cotizando", "pending", "wait", "pendiente", "enviado"].includes(v)) return "esperando";
     return "esperando";
   }
