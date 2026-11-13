@@ -181,6 +181,12 @@
 .ch-opt .ch-neto{font-size:22px;text-align:right}
 .ch-opt-line{font-size:14px;color:#e2e8f0;line-height:1.45}
 .ch-opt-line b{font-family:"JetBrains Mono",ui-monospace,monospace;color:#f8fafc}
+.ch-opt-nacion{display:block}
+.ch-opt-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:6px}
+.ch-opt-warn{color:#fbbf24}
+.ch-opt-plazos{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ch-opt-plazos span{font-size:12px;padding:3px 8px;border-radius:8px;background:rgba(30,41,59,.8);border:1px solid rgba(148,163,184,.2);color:#cbd5e1;font-family:"JetBrains Mono",ui-monospace,monospace}
+.ch-opt-plazos span.is-sel{border-color:rgba(96,165,250,.7);color:#fff}
 .ch-tip{
   margin:12px 0 0;padding:10px 12px;border-radius:12px;
   background:rgba(120,53,15,.38);border:1px solid rgba(251,191,36,.28);

@@ -118,18 +118,25 @@
   const cuotaFmt = (v) => (v == null || v === "" || !Number.isFinite(Number(v)))
     ? "—" : "$ " + Number(v).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  // Nación: oferta preliminar (plazo, TNA, 1° cuota). Sin montos hasta que exista la regla de neto.
+  // Nación: neto agencia, total financiado y 1° cuota por plazo (sin seguro). Nunca gasto ni costo.
   function nacionHtml(st) {
     const opts = Array.isArray(st?.options) ? st.options : [];
     if (!opts.length) return "";
     return `<div class="ch-options">${opts.map((o) => {
+      const tipo = /uva/i.test(o.tipo) ? "UVA" : "Tasa fija";
       const neto = (o.neto != null && o.neto !== "")
         ? `<div class="ch-neto"><small>NETO AGENCIA</small>${escapeHtml(money(o.neto))}</div>` : "";
+      const total = o.total_financiado != null
+        ? `<div class="ch-opt-line">Total financiado <b>${escapeHtml(money(o.total_financiado))}</b></div>` : "";
+      const dif = (o.alcanza === false && o.diferencia != null)
+        ? `<div class="ch-opt-line ch-opt-warn">No alcanza lo pedido · diferencia <b>-${escapeHtml(money(Math.abs(o.diferencia)))}</b></div>` : "";
+      const pls = Array.isArray(o.plazos) && o.plazos.length
+        ? `<div class="ch-opt-plazos">${o.plazos.map((x) => `<span class="${x.plazo === o.plazo ? "is-sel" : ""}">${escapeHtml(String(x.plazo))} m · ${escapeHtml(cuotaFmt(x.plazo === o.plazo ? o.primera_cuota : x.primera_cuota))}</span>`).join("")}</div>` : "";
       return `<div class="ch-opt ch-opt-nacion">
-        <div><span class="ch-opt-tipo">${escapeHtml(/uva/i.test(o.tipo) ? "UVA" : "Tasa fija")}</span>
-          <div class="ch-opt-line"><b>${escapeHtml(String(o.plazo ?? "—"))} meses</b> · TNA ${escapeHtml(pct(o.tna))}</div>
-          <div class="ch-opt-line">1° cuota <b>${escapeHtml(cuotaFmt(o.primera_cuota))}</b></div></div>
-        ${neto}</div>`;
+        <div class="ch-opt-head"><span class="ch-opt-tipo">${escapeHtml(tipo)} · TNA ${escapeHtml(pct(o.tna))}</span>${neto}</div>
+        ${total}${dif}
+        <div class="ch-opt-line"><b>${escapeHtml(String(o.plazo ?? "—"))} meses</b> · 1° cuota <b>${escapeHtml(cuotaFmt(o.primera_cuota))}</b></div>
+        ${pls}</div>`;
     }).join("")}</div>`;
   }
 
@@ -306,7 +313,9 @@
         // Solo plazo / tasas / cuota (y neto si algún día hay regla). Nunca montos del banco.
         if (!tipo || o.plazo == null) continue;
         const row = { tipo, plazo: o.plazo };
-        for (const k of ["tna", "tea", "cft", "primera_cuota", "neto"]) if (o[k] != null && o[k] !== "") row[k] = o[k];
+        for (const k of ["tna", "tea", "cft", "primera_cuota", "neto", "total_financiado", "diferencia"]) if (o[k] != null && o[k] !== "") row[k] = o[k];
+        if (typeof o.alcanza === "boolean") row.alcanza = o.alcanza;
+        if (Array.isArray(o.plazos)) row.plazos = o.plazos.filter((x) => x && x.plazo != null).map((x) => ({ plazo: x.plazo, primera_cuota: x.primera_cuota ?? null })).slice(0, 12);
         out.push(row);
         continue;
       }
