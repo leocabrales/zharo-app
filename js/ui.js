@@ -195,3 +195,16 @@ async function zharoPublicSubmitTarget(statusBase) {
     return { url: "", contentType: "" };
   }
 }
+
+
+function zharoRegisterSW() {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  const host = location.hostname;
+  const ok = location.protocol === "https:" || host === "localhost" || host === "127.0.0.1";
+  if (!ok) return;
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+if (typeof window !== "undefined") {
+  if (document.readyState === "complete") zharoRegisterSW();
+  else window.addEventListener("load", zharoRegisterSW);
+}

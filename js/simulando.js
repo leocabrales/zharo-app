@@ -130,12 +130,18 @@
         ? `<div class="ch-opt-line">Total financiado <b>${escapeHtml(money(o.total_financiado))}</b></div>` : "";
       const dif = (o.alcanza === false && o.diferencia != null)
         ? `<div class="ch-opt-line ch-opt-warn">No alcanza lo pedido · diferencia <b>-${escapeHtml(money(Math.abs(o.diferencia)))}</b></div>` : "";
-      const pls = Array.isArray(o.plazos) && o.plazos.length
-        ? `<div class="ch-opt-plazos">${o.plazos.map((x) => `<span class="${x.plazo === o.plazo ? "is-sel" : ""}">${escapeHtml(String(x.plazo))} m · ${escapeHtml(cuotaFmt(x.plazo === o.plazo ? o.primera_cuota : x.primera_cuota))}</span>`).join("")}</div>` : "";
-      return `<div class="ch-opt ch-opt-nacion">
+      const hasPlazos = Array.isArray(o.plazos) && o.plazos.filter((x) => x && x.plazo != null && x.primera_cuota != null).length > 1;
+      const pls = hasPlazos
+        ? `<div class="ch-opt-plazos plazo-chips">${o.plazos.map((x) => {
+            if (!x || x.plazo == null || x.primera_cuota == null) return "";
+            const sel = x.plazo === o.plazo ? " is-sel" : "";
+            return `<button type="button" class="plazo-chip${sel}" data-plazo-pick data-plazo="${escapeHtml(String(x.plazo))}" data-cuota="${escapeHtml(String(x.primera_cuota))}">${escapeHtml(String(x.plazo))} m · ${escapeHtml(cuotaFmt(x.primera_cuota))}</button>`;
+          }).join("")}</div>` : (Array.isArray(o.plazos) && o.plazos.length
+        ? `<div class="ch-opt-plazos">${o.plazos.map((x) => `<span class="${x.plazo === o.plazo ? "is-sel" : ""}">${escapeHtml(String(x.plazo))} m · ${escapeHtml(cuotaFmt(x.primera_cuota))}</span>`).join("")}</div>` : "");
+      return `<div class="ch-opt ch-opt-nacion" data-plazo-box>
         <div class="ch-opt-head"><span class="ch-opt-tipo">${escapeHtml(tipo)} · TNA ${escapeHtml(pct(o.tna))}</span>${neto}</div>
         ${total}${dif}
-        <div class="ch-opt-line"><b>${escapeHtml(String(o.plazo ?? "—"))} meses</b> · 1° cuota <b>${escapeHtml(cuotaFmt(o.primera_cuota))}</b></div>
+        <div class="ch-opt-line" data-plazo-line><b>${escapeHtml(String(o.plazo ?? "—"))} meses</b> · 1ª cuota (sin seguro) <b>${escapeHtml(cuotaFmt(o.primera_cuota))}</b></div>
         ${pls}</div>`;
     }).join("")}</div>`;
   }
@@ -182,7 +188,9 @@
         : (cls === "is-ok" ? `<span class="ch-msg">Oferta lista</span>` : "");
       result = `<div class="ch-result">
         ${netoHtml(ch, st)}
+        ${(typeof ZharoOferta !== "undefined" && ch.id !== "nacion") ? ZharoOferta.plazosHtml(st, ch.id) : ""}
         ${pdf ? `<div class="ch-actions">${pdf}</div>` : ""}
+        ${typeof ZharoRequisitos !== "undefined" ? ZharoRequisitos.html(ch.id) : ""}
         ${copyHtml(ch, st)}
       </div>`;
     } else if (cls === "is-stop") {
@@ -190,7 +198,7 @@
     } else if (cls === "is-skip") {
       result = `<div class="ch-result"><div class="ch-msg">${escapeHtml(ch.name)}: sin consultar (no se obtuvo el CUIT del cliente)</div></div>`;
     } else if (cls === "is-no") {
-      result = `<div class="ch-result"><div class="ch-msg">Sin oferta disponible en este canal.</div></div>`;
+      result = `<div class="ch-result"><div class="ch-msg">Sin oferta disponible en este canal.</div>${typeof ZharoRequisitos !== "undefined" ? ZharoRequisitos.html(ch.id) : ""}</div>`;
     } else if (cls === "is-err") {
       const msg = publicText(st?.message) || "No se pudo consultar. Reintentá más tarde.";
       result = `<div class="ch-result"><div class="ch-msg">${escapeHtml(msg)}</div></div>`;
@@ -229,8 +237,22 @@
     }
     updateProgress(caso);
     renderBest(caso);
+    if (typeof ZharoOferta !== "undefined") ZharoOferta.wirePlazos(document.body);
+    wirePrefill(document.body, () => (typeof ZharoCasos !== "undefined" && caso && caso.id && ZharoCasos.get(caso.id)) || caso);
   }
 
+
+  function wirePrefill(root, casoOrFn) {
+    if (!root || root._zharoPrefillWired || typeof ZharoPrefill === "undefined") return;
+    root._zharoPrefillWired = true;
+    root.addEventListener("click", (ev) => {
+      const a = ev.target.closest("[data-prefill]");
+      if (!a || !root.contains(a)) return;
+      const caso = typeof casoOrFn === "function" ? casoOrFn() : casoOrFn;
+      if (!caso) return;
+      ZharoPrefill.save(ZharoPrefill.fromCaso(caso, a.getAttribute("data-prefill")));
+    });
+  }
   function renderBest(caso) {
     const box = $("bestBox");
     if (!box || typeof ZharoOferta === "undefined") return;
@@ -291,6 +313,10 @@
       $("doneBox").classList.remove("hidden");
       if (caso.status !== "listo") {
         ZharoCasos.update(caso.id, { status: "listo" });
+      }
+      if (startedIncomplete && !finishNotified && typeof ZharoAviso !== "undefined") {
+        finishNotified = true;
+        ZharoAviso.done(caso);
       }
     } else {
       live.classList.remove("is-done");
@@ -570,6 +596,8 @@
       caso.status = "cotizando";
     }
 
+    if (typeof ZharoRequisitos !== "undefined") { try { await ZharoRequisitos.load(); } catch (_) {} }
+    startedIncomplete = settledCount(caso) < CHANNELS.length && !isStopped(caso);
     renderClient(caso);
     paintChannels(caso);
     listenLocal(caso.id);
@@ -600,6 +628,9 @@
       setTimeout(tick, 200);
     }
   }
+
+  let startedIncomplete = false;
+  let finishNotified = false;
 
   document.addEventListener("DOMContentLoaded", boot);
 })();

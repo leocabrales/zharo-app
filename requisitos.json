@@ -1,0 +1,25 @@
+{
+  "columbia": {
+    "items": [],
+    "nota": "A completar por Leo",
+    "fuente": null
+  },
+  "galicia": {
+    "items": [],
+    "nota": "A completar por Leo",
+    "fuente": null
+  },
+  "creditcar": {
+    "items": [],
+    "nota": "A completar por Leo",
+    "fuente": null
+  },
+  "nacion": {
+    "items": [
+      "Factura definitiva de venta en PDF: es la única documentación respaldatoria de venta que admite el banco para gestionar el préstamo. No se admite ningún otro tipo de documentación de venta.",
+      "DNI del cliente y validación biométrica (reconocimiento facial y verificación del DNI)."
+    ],
+    "nota": "Tomado del manual operativo de Nación que usa el bot (bna_manual.pdf). Si el banco actualizó el circuito, Leo puede corregirlo en este archivo.",
+    "fuente": "bna_manual.pdf"
+  }
+}

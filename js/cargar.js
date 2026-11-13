@@ -289,6 +289,67 @@ function wireCombo(k) {
   });
 }
 
+
+async function applyPrefill(p) {
+  if (!p || typeof p !== "object") return;
+  if (p.agencia) $("agencia").value = p.agencia;
+  if (p.dni) $("dni").value = String(p.dni).replace(/\D/g, "").slice(0, 8);
+  if (p.nombre) $("nombre").value = p.nombre;
+  if (p.plazo) {
+    const opt = [...$("plazo").options].some((o) => o.value === String(p.plazo));
+    if (opt) $("plazo").value = String(p.plazo);
+  }
+  const banner = document.getElementById("devBanner");
+  if (p.mode === "otro_monto") {
+    $("max").checked = false;
+    $("neto").value = "";
+    const note = document.getElementById("prefillNote") || document.createElement("div");
+    note.id = "prefillNote";
+    note.className = "banner";
+    note.textContent = "Datos del cliente y el auto ya cargados. Poné el nuevo neto y volvé a enviar. Es una consulta nueva, no se pisa la anterior.";
+    $("agencia").closest(".card").before(note);
+    setTimeout(() => { try { $("neto").focus(); } catch (_) {} }, 50);
+  } else if (p.max || p.neto === "máximo") {
+    $("max").checked = true;
+    $("neto").value = "";
+  } else if (p.neto != null && p.neto !== "") {
+    $("max").checked = false;
+    $("neto").value = Number(String(p.neto).replace(/\D/g, "") || p.neto).toLocaleString("es-AR");
+  }
+  if (p.mode === "recotizar") {
+    const note = document.getElementById("prefillNote") || document.createElement("div");
+    note.id = "prefillNote";
+    note.className = "banner";
+    note.textContent = "Datos de la consulta anterior. Revisalos y enviá de nuevo para recotizar.";
+    $("agencia").closest(".card").before(note);
+  }
+  const anio = p.anio || "";
+  if (anio && [...$("anio").options].some((o) => o.value === String(anio))) {
+    $("anio").value = String(anio);
+    await loadYear();
+    const setOrOtro = (k, val) => {
+      if (!val) return;
+      const want = String(val).trim().toUpperCase();
+      const items = itemsCache[k] || [];
+      const hit = items.find((it) => it.toUpperCase() === want) || items.find((it) => it.toUpperCase().includes(want) || want.includes(it.toUpperCase()));
+      if (hit) pick(k, hit);
+      else { pick(k, OTRO); $(k).value = val; }
+    };
+    setOrOtro("marca", p.marca);
+    setOrOtro("modelo", p.modelo);
+    setOrOtro("version", p.version);
+  } else if (p.marca || p.modelo || p.version) {
+    const force = (k, val) => {
+      if (!val) return;
+      try { pick(k, OTRO); } catch (_) {}
+      $(k).value = val;
+    };
+    force("marca", p.marca);
+    force("modelo", p.modelo);
+    force("version", p.version);
+  }
+}
+
 async function bootCargar() {
   const user = await ZharoAuth.requireAuth();
   if (!user) return;
@@ -297,6 +358,10 @@ async function bootCargar() {
   $("anio").onchange = loadYear;
 
   for (const k of ["marca", "modelo", "version"]) wireCombo(k);
+  if (typeof ZharoPrefill !== "undefined") {
+    const pre = ZharoPrefill.consume();
+    if (pre) await applyPrefill(pre);
+  }
 
   document.addEventListener("click", (e) => {
     if (!e.target.closest(".combo")) closeAll();
@@ -325,6 +390,7 @@ async function bootCargar() {
         zharoToast("Copiado");
         return;
       }
+      if (typeof ZharoAviso !== "undefined") { try { await ZharoAviso.ask(); } catch (_) {} }
       const res = await zharoSubmitCase(data, user);
       // Solo hay cotización en vivo si el caso salió de verdad. Nunca inventar ofertas.
       if (res.remote && res.remote.ok) {

@@ -8,11 +8,16 @@
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="shortcut icon" href="assets/favicon.ico">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ZHARO">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <title>ZHARO · Consulta</title>
-  <link rel="stylesheet" href="css/app.css?v=oferta1">
+  <link rel="stylesheet" href="css/app.css?v=feat2">
 </head>
 <body>
     <header class="app-bar">
@@ -42,9 +47,11 @@
   <script src="js/config.js?v=gis1"></script>
   <script src="js/auth.js?v=priv1"></script>
   <script src="js/casos.js?v=oferta1"></script>
-  <script src="js/oferta.js?v=oferta1"></script>
+  <script src="js/oferta.js?v=feat2"></script>
+  <script src="js/prefill.js?v=feat2"></script>
+  <script src="js/requisitos.js?v=feat2"></script>
   <script src="js/seguimiento.js?v=oferta1"></script>
-  <script src="js/ui.js?v=live1"></script>
+  <script src="js/ui.js?v=feat2"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const u = await ZharoAuth.requireAuth();
@@ -87,7 +94,9 @@
             }
             extra = `<div class="ficha-ch-meta">${bits.join(" · ")}</div>`;
           }
-          return `<div class="ficha-ch"><div class="ficha-ch-top"><b>${esc(ZharoCasos.CHANNEL_LABEL[id])}</b>${pill(r)}</div>${extra}</div>`;
+          const plazos = (typeof ZharoOferta !== "undefined") ? ZharoOferta.plazosHtml(ch, id) : "";
+          const req = (typeof ZharoRequisitos !== "undefined") ? ZharoRequisitos.html(id) : "";
+          return `<div class="ficha-ch"><div class="ficha-ch-top"><b>${esc(ZharoCasos.CHANNEL_LABEL[id])}</b>${pill(r)}</div>${extra}${plazos}${req}</div>`;
         }).join("");
         const live = c.href ? `<a class="ficha-live" href="${esc(c.href)}">Ver cotización en vivo</a>` : "";
         const best = (typeof ZharoOferta !== "undefined") ? ZharoOferta.cardHtml(c, "") : "";
@@ -113,11 +122,23 @@
             <div class="ficha-item"><div class="k">Comercial</div><div class="v">${esc(c.comercial || "—")}</div></div>
           </div>
           ${best}
+          <div class="ficha-actions">
+            <a class="btn primary" href="cargar.html" data-prefill="recotizar">Recotizar</a>
+            <a class="btn" href="cargar.html" data-prefill="otro_monto">¿Otro monto?</a>
+          </div>
           <div class="ficha-chs">${channels}</div>
           ${segBox}
           <div class="ficha-foot">${ZharoCasos.fmtWhen(c.fecha_hora)}</div>
           ${live}`;
-        if (typeof ZharoOferta !== "undefined") ZharoOferta.wire(box, () => c);
+        if (typeof ZharoOferta !== "undefined") {
+          ZharoOferta.wire(box, () => c);
+          ZharoOferta.wirePlazos(box);
+        }
+        box.addEventListener("click", (ev) => {
+          const a = ev.target.closest("[data-prefill]");
+          if (!a || typeof ZharoPrefill === "undefined") return;
+          ZharoPrefill.save(ZharoPrefill.fromCaso(c, a.getAttribute("data-prefill")));
+        });
         const save = document.getElementById("segSave");
         if (save) save.onclick = () => {
           const estado = (box.querySelector("[data-seg-estado]") || {}).value || "nueva";
@@ -133,16 +154,18 @@
       async function enrichPdfs(c) {
         const isWeb = c.source === "web" || /^[0-9a-f-]{36}$/i.test(c.id || "");
         if (!isWeb || typeof ZharoConfig === "undefined" || !ZharoConfig.fetchLiveJson) return c;
-        const missing = ZharoCasos.CHANNEL_IDS.some(id => !(c.channels[id] || {}).pdf_url);
-        if (!missing) return c;
         try {
           const base = (ZharoConfig.get("statusBaseUrl") || ZharoConfig.DEFAULT_STATUS_BASE).replace(/\/$/, "");
           const got = await ZharoConfig.fetchLiveJson(base + "/" + encodeURIComponent(c.id) + ".json");
           const chs = got && got.ok && got.json && got.json.channels;
           if (!chs) return c;
           for (const id of ZharoCasos.CHANNEL_IDS) {
-            const pdf = (chs[id] || {}).pdf_url;
-            if (pdf && c.channels[id] && !c.channels[id].pdf_url) c.channels[id].pdf_url = pdf;
+            const remote = chs[id] || {};
+            if (!c.channels[id]) continue;
+            if (remote.pdf_url && !c.channels[id].pdf_url) c.channels[id].pdf_url = remote.pdf_url;
+            if (Array.isArray(remote.options) && remote.options.length) c.channels[id].options = remote.options;
+            if (remote.primera_cuota != null && c.channels[id].primera_cuota == null) c.channels[id].primera_cuota = remote.primera_cuota;
+            if (remote.cuota_promedio != null && c.channels[id].cuota_promedio == null) c.channels[id].cuota_promedio = remote.cuota_promedio;
           }
         } catch (_) {}
         return c;
@@ -157,6 +180,7 @@
       }
       c = await enrichPdfs(c);
       try { await ZharoSeguimiento.pullGas(); } catch (_) {}
+      if (typeof ZharoRequisitos !== "undefined") { try { await ZharoRequisitos.load(); } catch (_) {} }
       render(c);
     });
   </script>

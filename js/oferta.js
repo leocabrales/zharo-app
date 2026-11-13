@@ -290,12 +290,75 @@ const ZharoOferta = (() => {
     return `<div class="best-card ${theme || ""}">
       <div class="best-kicker">Mejor opción</div>
       ${body}
-      <div class="best-share">${shareBtn("all")}</div>
+      <div class="best-share">${shareBtn("all")}${typeof ZharoPrefill !== "undefined" ? ` <a class="share-btn share-btn-mini" href="cargar.html" data-prefill="otro_monto">¿Otro monto?</a>` : ""}</div>
     </div>`;
   }
 
+
+  function plazosOf(ch) {
+    const out = [];
+    const seen = new Set();
+    const add = (plazo, cuota, tipo) => {
+      const p = num(plazo);
+      const c = num(cuota);
+      if (p == null || c == null) return;
+      const key = String(p) + ":" + String(tipo || "");
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ plazo: p, primera_cuota: c, tipo: tipo || null });
+    };
+    if (Array.isArray(ch && ch.options)) {
+      for (const o of ch.options) {
+        if (!o) continue;
+        if (Array.isArray(o.plazos) && o.plazos.length) {
+          for (const x of o.plazos) add(x && x.plazo, x && x.primera_cuota, o.tipo);
+        } else {
+          add(o.plazo, o.primera_cuota, o.tipo);
+        }
+      }
+    }
+    return out.sort((a, b) => a.plazo - b.plazo || String(a.tipo||"").localeCompare(String(b.tipo||"")));
+  }
+
+  function plazosHtml(ch, chId) {
+    const rows = plazosOf(ch);
+    if (rows.length < 2) return "";
+    const tipos = [...new Set(rows.map((r) => r.tipo || ""))];
+    const blocks = (tipos.length > 1 ? tipos : [tipos[0] || ""]).map((tipo) => {
+      const list = tipo ? rows.filter((r) => (r.tipo || "") === tipo) : rows;
+      if (list.length < 2 && tipos.length > 1) return "";
+      const chips = list.map((r, i) =>
+        `<button type="button" class="plazo-chip${i === 0 ? " is-sel" : ""}" data-plazo-pick data-plazo="${r.plazo}" data-cuota="${r.primera_cuota}">${r.plazo} m · ${esc(fmtCuota(r.primera_cuota))}</button>`
+      ).join("");
+      const lab = tipo ? `<div class="plazo-tipo">${esc(tipo)}</div>` : "";
+      const first = list[0];
+      const line = first
+        ? `<div class="ch-opt-line" data-plazo-line><b>${first.plazo} meses</b> · 1ª cuota (sin seguro) <b>${esc(fmtCuota(first.primera_cuota))}</b></div>`
+        : "";
+      return `<div class="plazo-box" data-plazo-box>${lab}<div class="ch-opt-plazos plazo-chips">${chips}</div>${line}</div>`;
+    }).join("");
+    return blocks ? `<div class="plazo-switch" data-ch="${esc(chId || "")}">${blocks}</div>` : "";
+  }
+
+  function wirePlazos(root) {
+    if (!root || root._zharoPlazoWired) return;
+    root._zharoPlazoWired = true;
+    root.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-plazo-pick]");
+      if (!b || !root.contains(b)) return;
+      ev.preventDefault();
+      const wrap = b.closest("[data-plazo-box]");
+      if (!wrap) return;
+      wrap.querySelectorAll("[data-plazo-pick]").forEach((x) => { if (x === b) x.classList.add("is-sel"); else x.classList.remove("is-sel"); });
+      const line = wrap.querySelector("[data-plazo-line]");
+      const plazo = b.getAttribute("data-plazo");
+      const cuota = num(b.getAttribute("data-cuota"));
+      if (line) line.innerHTML = `<b>${esc(plazo)} meses</b> · 1ª cuota (sin seguro) <b>${esc(fmtCuota(cuota))}</b>`;
+    });
+  }
+
   return {
-    offerList, bestOption, shareSummary, share, waUrl, wire, cardHtml, shareBtn,
+    offerList, bestOption, plazosOf, plazosHtml, wirePlazos, shareSummary, share, waUrl, wire, cardHtml, shareBtn,
     fmtNeto, fmtCuota, cuotaCaption, requestedPlazo, num, clientName,
   };
 })();

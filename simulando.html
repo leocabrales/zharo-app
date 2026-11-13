@@ -8,12 +8,16 @@
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="shortcut icon" href="assets/favicon.ico">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ZHARO">
   <title>ZHARO · Cotizando</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/app.css?v=oferta1">
-  <link rel="stylesheet" href="css/simulando.css?v=oferta1">
+  <link rel="stylesheet" href="css/app.css?v=feat2">
+  <link rel="stylesheet" href="css/simulando.css?v=feat2">
 </head>
 <body class="sim-body">
   <div class="sim-bg" aria-hidden="true">
@@ -62,8 +66,10 @@
       <div class="glass sim-done">
         <div class="sim-done-title">Listo</div>
         <p class="sim-done-sub">Ofertas actualizadas. Podés volver a Mis consultas o cargar otro cliente.</p>
+        <p class="sim-done-sub aviso-nota">El aviso (sonido, vibración o notificación) funciona mientras la app está abierta o en una pestaña en segundo plano. Si cerraste el navegador, no podemos avisarte.</p>
         <div class="sim-done-actions">
           <button type="button" class="sim-btn primary" data-share="all">Compartir por WhatsApp</button>
+          <a class="sim-btn" href="cargar.html" data-prefill="otro_monto">¿Otro monto?</a>
           <a class="sim-btn" href="casos.html">Ver mis consultas</a>
           <a class="sim-btn" href="cargar.html">Cargar otro</a>
           <a class="sim-btn" href="casos.html" onclick="return zhBack()">← Volver</a>
@@ -75,9 +81,12 @@
   <script src="js/config.js?v=live3"></script>
   <script src="js/auth.js?v=priv1"></script>
   <script src="js/casos.js?v=oferta1"></script>
-  <script src="js/oferta.js?v=oferta1"></script>
+  <script src="js/oferta.js?v=feat2"></script>
+  <script src="js/prefill.js?v=feat2"></script>
+  <script src="js/aviso.js?v=feat2"></script>
+  <script src="js/requisitos.js?v=feat2"></script>
   <script src="js/ui.js?v=live3"></script>
-  <script src="js/simulando.js?v=oferta1"></script>
+  <script src="js/simulando.js?v=feat2"></script>
 <script>
 function zhBack(){try{if(document.referrer&&new URL(document.referrer).origin===location.origin&&history.length>1){history.back();return false;}}catch(e){}return true;}
 </script>

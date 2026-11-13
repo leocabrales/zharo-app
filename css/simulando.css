@@ -256,3 +256,11 @@
 .share-btn-ch{background:transparent;color:#fecdd3;border:1px solid rgba(251,52,73,.5)}
 .share-btn-ch:hover{background:rgba(251,52,73,.45);color:#fff}
 .ch-actions{align-items:center}
+
+.ch .plazo-chip{background:transparent;color:#e2e8f0;border-color:#64748b}
+.ch .plazo-chip.is-sel{background:#FB3449;color:#fff;border-color:#FB3449}
+.ch .plazo-tipo{color:#94a3b8}
+.ch .req-box{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12);color:#e2e8f0}
+.ch .req-box summary{color:#fff}
+.ch .req-box .muted{color:#94a3b8}
+.sim-done-sub.aviso-nota{color:#94a3b8;margin-top:8px}
