@@ -1,35 +1,41 @@
 {
   "case_id": "f0360e59-5787-4526-8c48-2ff16e8609f6",
-  "updated_at": "2026-11-13T16:14:37-03:00",
-  "status": "listo",
+  "updated_at": "2026-11-13T16:26:40-03:00",
+  "status": "detenido",
   "channels": {
     "columbia": {
-      "state": "sin_oferta",
+      "state": "no_cotizado",
       "neto": null,
       "pdf_url": null,
-      "message": "El DNI no corresponde a la persona declarada. Revisalo por favor.",
-      "updated_at": "2026-11-13T16:14:16-03:00"
+      "message": null,
+      "options": null,
+      "updated_at": "2026-11-13T16:26:40-03:00"
     },
     "galicia": {
-      "state": "sin_oferta",
+      "state": "no_cotizado",
       "neto": null,
       "pdf_url": null,
-      "message": "El DNI no corresponde a la persona declarada. Revisalo por favor.",
-      "updated_at": "2026-11-13T16:14:21-03:00"
+      "message": null,
+      "options": null,
+      "updated_at": "2026-11-13T16:26:40-03:00"
     },
     "creditcar": {
-      "state": "sin_oferta",
+      "state": "no_cotizado",
       "neto": null,
       "pdf_url": null,
-      "message": "El DNI no corresponde a la persona declarada. Revisalo por favor.",
-      "updated_at": "2026-11-13T16:14:25-03:00"
+      "message": null,
+      "options": null,
+      "updated_at": "2026-11-13T16:26:40-03:00"
     },
     "nacion": {
-      "state": "sin_oferta",
+      "state": "no_cotizado",
       "neto": null,
       "pdf_url": null,
-      "message": "El DNI no corresponde a la persona declarada. Revisalo por favor.",
-      "updated_at": "2026-11-13T16:14:29-03:00"
+      "message": null,
+      "options": null,
+      "updated_at": "2026-11-13T16:26:40-03:00"
     }
-  }
+  },
+  "case_state": "dni_no_coincide",
+  "case_message": "El DNI no corresponde a la persona declarada. Revisá los datos y volvé a cargar."
 }
