@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-13T15:31:42-03:00",
-  "count": 14,
+  "updated_at": "2026-11-13T15:53:46-03:00",
+  "count": 15,
   "casos": [
     {
       "id": "csv_0d03d2d10c66a443",
@@ -36,6 +36,39 @@
       }
     },
     {
+      "id": "5fc17173-d4c0-4af7-b2ad-16b46b629cc1",
+      "fecha_hora": "2026-11-13 15:51",
+      "comercial": "Leo (modo prueba)",
+      "agencia": "PRUEBA 1",
+      "vehiculo": "KIA CERATO CERATO 1.6 EX 5 PTAS AUT L/18 2018",
+      "neto_pedido": "máximo",
+      "plazos": null,
+      "dni_tail": "011",
+      "source": "web",
+      "channels": {
+        "columbia": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        },
+        "galicia": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        },
+        "creditcar": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        },
+        "nacion": {
+          "resultado": "sin_oferta",
+          "neto": null,
+          "plazos": null
+        }
+      }
+    },
+    {
       "id": "9113143a-4a2b-41cb-b5a5-ac3ecc228c91",
       "fecha_hora": "2026-11-13 15:31",
       "comercial": "Leo (modo prueba)",
@@ -62,7 +95,7 @@
           "plazos": null
         },
         "nacion": {
-          "resultado": "sin_consultar",
+          "resultado": "sin_oferta",
           "neto": null,
           "plazos": null
         }
