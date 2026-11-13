@@ -1,6 +1,6 @@
 {
   "case_id": "d2d941dc-1787-4775-a39f-6353f91bbb7f",
-  "updated_at": "2026-11-13T16:24:01-03:00",
+  "updated_at": "2026-11-13T16:36:55-03:00",
   "status": "listo",
   "channels": {
     "columbia": {
@@ -8,7 +8,7 @@
       "neto": 2519200,
       "pdf_url": "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status/pdf/d2d941dc-1787-4775-a39f-6353f91bbb7f_columbia.pdf",
       "message": null,
-      "updated_at": "2026-11-13T16:23:50-03:00"
+      "updated_at": "2026-11-13T16:36:55-03:00"
     },
     "galicia": {
       "state": "sin_oferta",
