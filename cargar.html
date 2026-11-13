@@ -3,22 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-  <meta name="theme-color" content="#0b3d91">
+  <meta name="theme-color" content="#FB3449">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="shortcut icon" href="assets/favicon.ico">
   <title>ZHARO · Cargar cliente</title>
-  <link rel="stylesheet" href="css/app.css?v=priv1">
+  <link rel="stylesheet" href="css/app.css?v=brand1">
 </head>
 <body>
+    <header class="app-bar">
+      <div class="app-bar-inner">
+        <div class="brand">
+          <a href="index.html" class="brand-link"><img src="assets/zaro_logo_blanco.png" alt="ZARO" class="brand-logo"></a>
+          <div class="tag">Cargar cliente</div>
+        </div>
+        <div class="userbar" id="userbar"></div>
+      </div>
+    </header>
   <div class="wrap">
     <div id="devBanner" class="hidden"></div>
-    <div class="top">
-      <div class="brand">
-        <h1><b>ZHARO</b></h1>
-        <div class="tag">Cargar cliente</div>
-      </div>
-      <div class="userbar" id="userbar"></div>
-    </div>
-
-    <div class="card">
+<div class="card">
       <label>Agencia</label>
       <input id="agencia" autocomplete="off"><div class="msg" id="m_agencia"></div>
 
