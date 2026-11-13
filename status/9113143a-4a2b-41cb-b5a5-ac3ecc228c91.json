@@ -1,0 +1,35 @@
+{
+  "case_id": "9113143a-4a2b-41cb-b5a5-ac3ecc228c91",
+  "updated_at": "2026-11-13T15:29:47-03:00",
+  "status": "cotizando",
+  "channels": {
+    "columbia": {
+      "state": "esperando",
+      "neto": null,
+      "pdf_url": null,
+      "message": null,
+      "updated_at": null
+    },
+    "galicia": {
+      "state": "esperando",
+      "neto": null,
+      "pdf_url": null,
+      "message": null,
+      "updated_at": null
+    },
+    "creditcar": {
+      "state": "esperando",
+      "neto": null,
+      "pdf_url": null,
+      "message": null,
+      "updated_at": null
+    },
+    "nacion": {
+      "state": "esperando",
+      "neto": null,
+      "pdf_url": null,
+      "message": null,
+      "updated_at": null
+    }
+  }
+}
