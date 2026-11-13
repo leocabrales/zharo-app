@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <title>ZHARO · Gestión de casos</title>
-  <link rel="stylesheet" href="css/app.css?v=gest5">
+  <link rel="stylesheet" href="css/app.css?v=gest6">
 </head>
 <body>
   <div class="wrap wrap-wide">
@@ -32,7 +32,7 @@
         <select id="fltComercial"><option value="todos">Comercial: todos</option></select>
         <select id="fltFecha"><option value="todos" selected>Fecha: todas</option><option value="hoy">Hoy</option><option value="7">7 días</option><option value="30">30 días</option></select>
         <select id="fltCanal"><option value="cualquiera">Canal: cualquiera</option><option value="columbia">Columbia</option><option value="galicia">Galicia</option><option value="creditcar">CreditCar</option><option value="nacion">Nación</option></select>
-        <select id="fltRes"><option value="todos">Resultado: todos</option><option value="aprobado">Pre aprobado</option><option value="sujeto_analisis">Sujeto a análisis</option><option value="sin_oferta">Sin oferta</option><option value="error">Error temporal</option><option value="sin_consultar">Sin consultar</option><option value="pendiente">Cotizando</option></select>
+        <select id="fltRes"><option value="todos">Resultado: todos</option><option value="aprobado">Pre aprobado</option><option value="sujeto_analisis">Sujeto a análisis</option><option value="sin_oferta">Sin oferta</option><option value="error">Error temporal</option><option value="sin_consultar">Sin consultar</option><option value="dni_no_coincide">DNI no coincide</option><option value="pendiente">Cotizando</option></select>
         <button type="button" class="ops-btn primary" id="fltSearch">Buscar</button><button type="button" class="ops-clear" id="fltClear">Limpiar</button>
       </div>
       <div class="ops-meta"><span class="muted" id="syncNote">Datos del bot + casos de este dispositivo.</span><span class="muted" id="listCount"></span></div>
@@ -49,7 +49,7 @@
 
   <script src="js/config.js?v=gis1"></script>
   <script src="js/auth.js?v=gest4"></script>
-  <script src="js/casos.js?v=bna1"></script>
+  <script src="js/casos.js?v=stop1"></script>
   <script src="js/ui.js?v=live1"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
@@ -76,8 +76,9 @@
         const s = ZharoCasos.computeStats(casos);
         const pend = casos.filter(c => ZharoCasos.overallStatus(c) === "pendiente").length;
         let h = tile("Total consultas", s.total, "", "t-blue")
-          + tile("Aprobación", s.total ? s.aprobPct + "%" : "—", s.total ? `${s.aprobCount} de ${s.total}` : "", "t-green")
+          + tile("Aprobación", s.cotizados ? s.aprobPct + "%" : "—", s.cotizados ? `${s.aprobCount} de ${s.cotizados}` : "", "t-green")
           + tile("Cotizando", pend, "", "t-amber");
+        if (s.dniNoCoincide) h += tile("DNI no coincide", s.dniNoCoincide, "no cotizados", "t-red");
         h += ZharoCasos.CHANNEL_IDS.map(id => { const p = s.perCanal[id]; return tile(ZharoCasos.CHANNEL_LABEL[id], p.pct == null ? "—" : p.pct + "%", `${p.ok}/${p.n||0} OK`); }).join("");
         h += s.topAgencias.slice(0, 2).map(a => tile("Agencia", a.n, esc(a.nombre))).join("");
         $("opsKpis").innerHTML = h;

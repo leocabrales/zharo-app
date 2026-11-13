@@ -232,3 +232,16 @@
 
 .sim-top{position:sticky;top:0;z-index:20;padding:10px 0;background:linear-gradient(#050b18 70%,rgba(5,11,24,0));}
 .sim-back{font-weight:600}
+
+/* Caso detenido (p.ej. DNI que no corresponde a la persona declarada) */
+.sim-stop{margin:14px 0}
+.sim-stop-card{border:1px solid rgba(248,113,113,.55);background:linear-gradient(135deg,rgba(127,29,29,.55),rgba(120,53,15,.45));padding:18px 18px 16px;border-radius:16px}
+.sim-stop-title{font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:13px;color:#fecaca;margin-bottom:6px}
+.sim-stop-msg{font-size:17px;font-weight:600;line-height:1.4;color:#fff;margin:0 0 14px}
+.sim-live.is-stop{color:#fca5a5}
+.sim-live.is-stop .sim-pulse-dot{background:#f87171;animation:none;box-shadow:0 0 12px rgba(248,113,113,.6)}
+.sim-progress-bar.is-stop{background:linear-gradient(90deg,#f87171,#f59e0b)}
+.ch.is-stop{opacity:.55;filter:grayscale(.6)}
+.ch.is-stop .ch-result{display:block}
+.ch.is-stop .ch-waitline,.ch.is-stop .ch-ticker{display:none}
+.ch.is-stop .ch-status{color:#cbd5e1;background:rgba(51,65,85,.5);border-color:rgba(148,163,184,.35)}

@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-13T16:24:03-03:00",
-  "count": 17,
+  "updated_at": "2026-11-13T16:26:06-03:00",
+  "count": 18,
   "casos": [
     {
       "id": "f0360e59-5787-4526-8c48-2ff16e8609f6",
@@ -14,26 +14,27 @@
       "source": "web",
       "channels": {
         "columbia": {
-          "resultado": null,
+          "resultado": "no_cotizado",
           "neto": null,
           "plazos": null
         },
         "galicia": {
-          "resultado": null,
+          "resultado": "no_cotizado",
           "neto": null,
           "plazos": null
         },
         "creditcar": {
-          "resultado": null,
+          "resultado": "no_cotizado",
           "neto": null,
           "plazos": null
         },
         "nacion": {
-          "resultado": null,
+          "resultado": "no_cotizado",
           "neto": null,
           "plazos": null
         }
-      }
+      },
+      "case_state": "dni_no_coincide"
     },
     {
       "id": "csv_0d03d2d10c66a443",
@@ -60,6 +61,39 @@
           "resultado": "sin_oferta",
           "neto": null,
           "plazos": "24"
+        },
+        "nacion": {
+          "resultado": null,
+          "neto": null,
+          "plazos": null
+        }
+      }
+    },
+    {
+      "id": "csv_b69cf131a1c757dd",
+      "fecha_hora": "2026-11-13 16:30",
+      "comercial": "Agustin Ortega",
+      "agencia": "Coll automotores",
+      "vehiculo": "PEUGEOT 208 1.6 5P FELINE PK CUIR 2015",
+      "neto_pedido": "máximo",
+      "plazos": "36",
+      "dni_tail": "957",
+      "source": "csv",
+      "channels": {
+        "columbia": {
+          "resultado": "pre_aprobado",
+          "neto": 2519200,
+          "plazos": "36"
+        },
+        "galicia": {
+          "resultado": "sin_oferta",
+          "neto": null,
+          "plazos": null
+        },
+        "creditcar": {
+          "resultado": "pendiente",
+          "neto": 4824000,
+          "plazos": "30"
         },
         "nacion": {
           "resultado": null,

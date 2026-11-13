@@ -118,6 +118,8 @@ const ZharoCasos = (() => {
     if (r === "error" || r === "err" || r === "timeout") return "error";
     if (r === "no consultado" || r === "noconsultado") return "no_consultado";
     if (r === "sin consultar" || r === "sinconsultar") return "sin_consultar";
+    if (r === "no cotizado" || r === "nocotizado") return "no_cotizado";
+    if (r === "dni no coincide" || r === "detenido") return "dni_no_coincide";
     if (r === "esperando" || r === "pendiente" || r === "cotizando" || r === "enviado" || r === "wait") return "pendiente";
     return "pendiente";
   }
@@ -125,6 +127,8 @@ const ZharoCasos = (() => {
   function stateLabel(resultado) {
     const r = normResultado(resultado);
     if (r === "no_consultado") return "—";
+    if (r === "no_cotizado") return "No cotizado";
+    if (r === "dni_no_coincide") return "DNI no coincide";
     if (r === "sin_consultar") return "Sin consultar";
     if (r === "pre_aprobado") return "Pre aprobado";
     if (r === "sujeto_analisis") return "Sujeto a análisis";
@@ -163,6 +167,7 @@ const ZharoCasos = (() => {
       nombre: c.nombre || null,
       dni: c.dni || null,
       status: c.status || null,
+      case_state: c.case_state || null,
       href: "simulando.html?id=" + encodeURIComponent(c.id),
       channels,
       _raw: c,
@@ -194,6 +199,7 @@ const ZharoCasos = (() => {
       nombre: null,
       dni: null,
       status: null,
+      case_state: c.case_state || null,
       href: isWeb ? ("simulando.html?id=" + encodeURIComponent(c.id)) : null,
       channels,
       _raw: c,
@@ -229,6 +235,7 @@ const ZharoCasos = (() => {
         nombre: row.nombre || prev.nombre,
         dni: row.dni || null,
         href: row.href || prev.href,
+        case_state: row.case_state || prev.case_state || null,
         origin: "local+feed",
       });
     }
@@ -240,6 +247,7 @@ const ZharoCasos = (() => {
   }
 
   function overallStatus(caso) {
+    if (caso.case_state === "dni_no_coincide") return "dni_no_coincide";
     const vals = CHANNEL_IDS.map((id) => (caso.channels[id] || {}).resultado).filter((v) => v && v !== "no_consultado" && v !== "sin_consultar");
     if (!vals.length) return "pendiente";
     if (vals.some((v) => v === "pendiente")) return "pendiente";
@@ -306,17 +314,20 @@ const ZharoCasos = (() => {
       let ok = 0, n = 0;
       for (const c of casos) {
         const r = (c.channels[id] || {}).resultado;
-        if (!r || r === "pendiente" || r === "no_consultado" || r === "sin_consultar") continue;
+        if (!r || r === "pendiente" || r === "no_consultado" || r === "sin_consultar" || r === "no_cotizado") continue;
         n++;
         if (r === "pre_aprobado") ok++;
         else if (id === "nacion" && r === "sujeto_analisis") ok++; // Nación solo da oferta preliminar
       }
       perCanal[id] = { ok, n, pct: n ? Math.round((ok / n) * 100) : null };
     }
-    let overallOk = 0;
+    let overallOk = 0, stopped = 0;
     for (const c of casos) {
-      if (overallStatus(c) === "pre_aprobado") overallOk++;
+      const ov = overallStatus(c);
+      if (ov === "pre_aprobado") overallOk++;
+      if (ov === "dni_no_coincide") stopped++;
     }
+    const cotizados = total - stopped;       // un caso frenado no se cotizó: fuera de la aprobación
     const agCount = {};
     for (const c of casos) {
       const a = c.agencia || "—";
@@ -329,7 +340,9 @@ const ZharoCasos = (() => {
 
     return {
       total,
-      aprobPct: total ? Math.round((overallOk / total) * 100) : 0,
+      aprobPct: cotizados ? Math.round((overallOk / cotizados) * 100) : 0,
+      cotizados,
+      dniNoCoincide: stopped,
       aprobCount: overallOk,
       perCanal,
       topAgencias,
@@ -390,6 +403,7 @@ const ZharoCasos = (() => {
     if (res === "sin_oferta") return r === "sin_oferta";
     if (res === "error") return r === "error";
     if (res === "sin_consultar") return r === "sin_consultar";
+    if (res === "dni_no_coincide") return r === "dni_no_coincide";
     if (res === "pendiente" || res === "cotizando") return r === "pendiente";
     return true;
   }
@@ -398,8 +412,8 @@ const ZharoCasos = (() => {
     const r = normResultado(resultado);
     if (r === "pre_aprobado") return "ok";
     if (r === "sujeto_analisis") return "review";
-    if (r === "error") return "err";
-    if (r === "sin_oferta" || r === "sin_consultar") return "no";
+    if (r === "error" || r === "dni_no_coincide") return "err";
+    if (r === "sin_oferta" || r === "sin_consultar" || r === "no_cotizado") return "no";
     return "wait";
   }
 

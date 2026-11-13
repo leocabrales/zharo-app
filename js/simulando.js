@@ -159,6 +159,7 @@
     // Casos anteriores a Nación (o canal no consultado): no se muestra la tarjeta.
     if (state === "no_consultado") return "";
     const cls =
+      state === "no_cotizado" ? "is-stop" :
       state === "sin_consultar" ? "is-skip" :
       state === "sujeto_analisis" ? "is-analisis" :
       state === "pre_aprobado" ? "is-ok" :
@@ -166,7 +167,8 @@
       state === "error" ? "is-err" : "is-wait";
 
     let statusLabel = "Cotizando";
-    if (cls === "is-skip") statusLabel = "Sin consultar";
+    if (cls === "is-stop") statusLabel = "No cotizado";
+    else if (cls === "is-skip") statusLabel = "Sin consultar";
     else if (cls === "is-analisis") statusLabel = "Sujeto a análisis";
     else if (cls === "is-ok") statusLabel = "Pre aprobado";
     else if (cls === "is-no") statusLabel = "Sin oferta";
@@ -182,6 +184,8 @@
         ${pdf ? `<div class="ch-actions">${pdf}</div>` : ""}
         ${copyHtml(ch, st)}
       </div>`;
+    } else if (cls === "is-stop") {
+      result = `<div class="ch-result"><div class="ch-msg">No cotizado.</div></div>`;
     } else if (cls === "is-skip") {
       result = `<div class="ch-result"><div class="ch-msg">${escapeHtml(ch.name)}: sin consultar (no se obtuvo el CUIT del cliente)</div></div>`;
     } else if (cls === "is-no") {
@@ -232,7 +236,34 @@
     }).length;
   }
 
+  const DNI_MSG = "El DNI no corresponde a la persona declarada. Revisá los datos y volvé a cargar.";
+  const CASE_MSGS = { dni_no_coincide: DNI_MSG };
+
+  function isStopped(caso) {
+    return !!(caso && caso.case_state && CASE_MSGS[caso.case_state]);
+  }
+
+  function renderStop(caso) {
+    const box = $("stopBox");
+    if (!box) return;
+    if (!isStopped(caso)) { box.classList.add("hidden"); return; }
+    $("stopMsg").textContent = CASE_MSGS[caso.case_state];
+    box.classList.remove("hidden");
+  }
+
   function updateProgress(caso) {
+    renderStop(caso);
+    if (isStopped(caso)) {
+      $("progressBar").style.width = "100%";
+      $("progressBar").classList.add("is-stop");
+      $("progressLabel").textContent = "Caso detenido · no se cotizó";
+      const live = $("liveBadge");
+      live.classList.remove("is-done");
+      live.classList.add("is-stop");
+      $("liveLabel").textContent = "DETENIDO";
+      $("doneBox").classList.add("hidden");
+      return;
+    }
     const n = settledCount(caso);
     const pct = Math.max(8, Math.round((n / CHANNELS.length) * 100));
     $("progressBar").style.width = pct + "%";
@@ -255,9 +286,32 @@
     }
   }
 
+  // Caso frenado (p.ej. DNI que no corresponde a la persona). Se reconoce por case_state, por
+  // status "detenido" o, si el endpoint en vivo todavía no conoce el estado, por el mensaje del caso.
+  function remoteCaseState(remote) {
+    if (CASE_MSGS[remote.case_state]) return remote.case_state;
+    const chans = remote.channels || {};
+    const msgs = CHANNELS.map((ch) => (chans[ch.id] || {}).message).filter(Boolean);
+    if (msgs.length && msgs.every((m) => /^El DNI no corresponde a la persona declarada/i.test(String(m)))) return "dni_no_coincide";
+    if (remote.status === "detenido") return "dni_no_coincide";
+    return null;
+  }
+
   function applyRemoteStatus(caso, remote) {
     if (!remote || typeof remote !== "object") return false;
     let changed = false;
+    const cs = remoteCaseState(remote);
+    if (cs) {
+      if (caso.case_state !== cs || caso.status !== "detenido") changed = true;
+      caso.case_state = cs;
+      caso.status = "detenido";
+      for (const ch of CHANNELS) {
+        const cur = caso.channels[ch.id] || {};
+        if (cur.state !== "no_cotizado") changed = true;
+        caso.channels[ch.id] = { state: "no_cotizado", neto: null, pdf_url: null, message: null, options: null, updated_at: null };
+      }
+      return changed;
+    }
     const chans = remote.channels || remote;
     for (const ch of CHANNELS) {
       const r = chans[ch.id];
@@ -345,6 +399,7 @@
     if (["sin oferta", "sinoferta", "no", "rechazado"].includes(v)) return "sin_oferta";
     if (["error", "err", "timeout"].includes(v)) return "error";
     if (v === "no consultado" || v === "noconsultado") return "no_consultado";
+    if (v === "no cotizado" || v === "nocotizado") return "no_cotizado";
     if (v === "sin consultar" || v === "sinconsultar") return "sin_consultar";
     if (["esperando", "cotizando", "pending", "wait", "pendiente", "enviado"].includes(v)) return "esperando";
     return "esperando";
@@ -359,7 +414,7 @@
       if (got.missing) return "missing";
       if (!got.ok || !got.json || got.notModified) return got.ok ? "same" : "error";
       if (applyRemoteStatus(caso, got.json)) {
-        ZharoCasos.update(caso.id, { channels: caso.channels, status: caso.status });
+        ZharoCasos.update(caso.id, { channels: caso.channels, status: caso.status, case_state: caso.case_state || null });
         paintChannels(caso, { flip: true });
         return "updated";
       }
@@ -510,7 +565,7 @@
         else missStreak = 0;
         const fresh = ensureChannels(ZharoCasos.get(caso.id) || c);
         // Cada canal se pinta solo. Recién con los tres (o status listo) se deja de pedir.
-        if (settledCount(fresh) < CHANNELS.length && fresh.status !== "listo") {
+        if (!isStopped(fresh) && settledCount(fresh) < CHANNELS.length && fresh.status !== "listo") {
           setTimeout(tick, missStreak >= 8 ? 8000 : 2500);
         }
       };
