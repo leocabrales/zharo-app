@@ -177,7 +177,8 @@
     let result = "";
     if (cls === "is-ok" || cls === "is-analisis") {
       const pdf = st?.pdf_url
-        ? `<a class="ch-pdf" href="${escapeHtml(st.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>`
+        ? `<a class="ch-pdf" href="${escapeHtml(st.pdf_url)}" target="_blank" rel="noopener">Abrir PDF</a>` +
+          (typeof ZharoOferta !== "undefined" ? ZharoOferta.shareBtn(ch.id, "share-btn-ch") : "")
         : (cls === "is-ok" ? `<span class="ch-msg">Oferta lista</span>` : "");
       result = `<div class="ch-result">
         ${netoHtml(ch, st)}
@@ -227,6 +228,17 @@
       }
     }
     updateProgress(caso);
+    renderBest(caso);
+  }
+
+  function renderBest(caso) {
+    const box = $("bestBox");
+    if (!box || typeof ZharoOferta === "undefined") return;
+    if (isStopped(caso)) { box.innerHTML = ""; box.classList.add("hidden"); return; }
+    const html = ZharoOferta.cardHtml(caso, "best-dark");
+    box.innerHTML = html;
+    if (html) box.classList.remove("hidden"); else box.classList.add("hidden");
+    ZharoOferta.wire(document.body, () => (typeof ZharoCasos !== "undefined" && caso && caso.id && ZharoCasos.get(caso.id)) || caso);
   }
 
   function settledCount(caso) {
@@ -262,6 +274,7 @@
       live.classList.add("is-stop");
       $("liveLabel").textContent = "DETENIDO";
       $("doneBox").classList.add("hidden");
+      renderBest(caso);
       return;
     }
     const n = settledCount(caso);
@@ -334,6 +347,8 @@
           : (cur.message || null),
         tip_plazos: Object.prototype.hasOwnProperty.call(r, "tip_plazos") ? (r.tip_plazos ?? null) : (cur.tip_plazos || null),
         options: Object.prototype.hasOwnProperty.call(r, "options") ? sanitizeOptions(r.options, ch.id) : (cur.options || null),
+        primera_cuota: r.primera_cuota ?? r.cuota ?? cur.primera_cuota ?? null,
+        cuota_promedio: r.cuota_promedio ?? r.promedio ?? cur.cuota_promedio ?? null,
         updated_at: r.updated_at || new Date().toISOString(),
       };
       if (channelSignature(next) !== channelSignature(cur)) {
@@ -373,8 +388,20 @@
         out.push(row);
         continue;
       }
-      if (!tipo || o.neto == null || o.neto === "") continue;
-      out.push({ tipo, neto: o.neto });
+      if (!tipo) continue;
+      const row = { tipo };
+      if (o.neto != null && o.neto !== "") row.neto = o.neto;
+      if (o.plazo != null && o.plazo !== "") row.plazo = o.plazo;
+      for (const k of ["tna", "tea", "cft", "primera_cuota", "total_financiado", "diferencia"]) {
+        if (o[k] != null && o[k] !== "") row[k] = o[k];
+      }
+      if (Array.isArray(o.plazos)) {
+        row.plazos = o.plazos.filter((x) => x && x.plazo != null).map((x) => ({
+          plazo: x.plazo, primera_cuota: x.primera_cuota ?? null
+        })).slice(0, 12);
+      }
+      if (row.neto == null && row.primera_cuota == null && !row.plazos) continue;
+      out.push(row);
     }
     return out.length ? out : null;
   }

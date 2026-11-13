@@ -224,3 +224,30 @@ pre.payload{white-space:pre-wrap;word-break:break-word;background:#0f172a;color:
 .ficha-ch-meta a{font-weight:700}
 .ficha-foot{margin-top:14px;font-size:12px;color:var(--muted)}
 .ficha-live{display:inline-block;margin-top:12px;font-size:13px;font-weight:700}
+
+/* Mejor opción + compartir + seguimiento */
+.best-card{border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:#fff;margin:0 0 14px;box-shadow:var(--shadow)}
+.best-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin:0 0 10px}
+.best-block{margin:0 0 12px;padding:0 0 12px;border-bottom:1px solid var(--border)}
+.best-block:last-of-type{margin:0;padding:0;border:0}
+.best-block-h{font-size:11px;font-weight:700;color:var(--muted);margin:0 0 4px}
+.best-bank{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.best-neto{font-size:20px;font-weight:800;color:var(--blue);margin:4px 0 2px}
+.best-cuota{font-size:13px;font-weight:600;color:var(--text)}
+.best-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.best-share{margin-top:12px}
+.share-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border-radius:10px;border:0;background:var(--blue);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.share-btn:hover{background:var(--blue-d)}
+.share-btn-mini,.share-btn-ch{padding:6px 10px;font-size:12px;border-radius:8px;background:transparent;color:var(--blue);border:1px solid var(--blue)}
+.share-btn-mini:hover,.share-btn-ch:hover{background:var(--blue);color:#fff}
+.share-pdf{font-size:13px;font-weight:700}
+.seg-select{font:inherit;font-size:12px;height:28px;padding:0 8px;border:1px solid var(--border);border-radius:6px;background:#fff}
+.ops-st.seg-presentado{background:#fff1f3;color:var(--blue)}
+.seg-box{margin:16px 0 0;padding:14px 0 0;border-top:1px solid var(--border)}
+.seg-box h3{margin:0 0 8px;font-size:14px;font-weight:800}
+.seg-box textarea{min-height:72px;font-family:inherit;font-size:14px}
+.seg-fecha{font-size:11px;color:var(--muted);margin-top:6px}
+.q-pills{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.conv-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;margin:3px 0}
+.conv-row b{font-variant-numeric:tabular-nums}
+.ficha-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}

@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <title>ZHARO · Consulta</title>
-  <link rel="stylesheet" href="css/app.css?v=brand1">
+  <link rel="stylesheet" href="css/app.css?v=oferta1">
 </head>
 <body>
     <header class="app-bar">
@@ -41,7 +41,9 @@
 
   <script src="js/config.js?v=gis1"></script>
   <script src="js/auth.js?v=priv1"></script>
-  <script src="js/casos.js?v=priv1"></script>
+  <script src="js/casos.js?v=oferta1"></script>
+  <script src="js/oferta.js?v=oferta1"></script>
+  <script src="js/seguimiento.js?v=oferta1"></script>
   <script src="js/ui.js?v=live1"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
@@ -74,26 +76,58 @@
             const bits = [];
             if (!(id === "nacion" && ch.neto == null)) bits.push(`Neto $ ${ZharoCasos.fmtMoney(ch.neto)}`);
             bits.push(`Plazos ${esc(ch.plazos || "—")}`);
-            if (ch.pdf_url) bits.push(`<a href="${esc(ch.pdf_url)}" target="_blank" rel="noopener">Ver PDF</a>`);
+            if (typeof ZharoOferta !== "undefined") {
+              const offers = ZharoOferta.offerList({ ...c, channels: { [id]: ch } });
+              const cap = offers[0] ? ZharoOferta.cuotaCaption(offers[0]) : null;
+              if (cap) bits.push(esc(cap));
+            }
+            if (ch.pdf_url) {
+              bits.push(`<a href="${esc(ch.pdf_url)}" target="_blank" rel="noopener">Ver PDF</a>`);
+              if (typeof ZharoOferta !== "undefined") bits.push(ZharoOferta.shareBtn(id, "share-btn-mini"));
+            }
             extra = `<div class="ficha-ch-meta">${bits.join(" · ")}</div>`;
           }
           return `<div class="ficha-ch"><div class="ficha-ch-top"><b>${esc(ZharoCasos.CHANNEL_LABEL[id])}</b>${pill(r)}</div>${extra}</div>`;
         }).join("");
         const live = c.href ? `<a class="ficha-live" href="${esc(c.href)}">Ver cotización en vivo</a>` : "";
+        const best = (typeof ZharoOferta !== "undefined") ? ZharoOferta.cardHtml(c, "") : "";
+        const seg = ZharoSeguimiento.get(c.id);
+        const segFecha = seg.fecha ? `Último cambio: ${ZharoCasos.fmtWhen(seg.fecha)}` : "Todavía no hubo un cambio de estado.";
+        const segBox = `<div class="seg-box">
+            <h3>Seguimiento comercial</h3>
+            ${ZharoSeguimiento.selectHtml(c.id)}
+            <label>Nota</label>
+            <textarea id="segNota" maxlength="500" placeholder="Nota interna (no se comparte en el PDF ni en WhatsApp)">${esc(seg.nota)}</textarea>
+            <div class="ficha-actions"><button type="button" class="btn primary" id="segSave">Guardar seguimiento</button></div>
+            <div class="seg-fecha" id="segFecha">${esc(segFecha)}</div>
+          </div>`;
         box.innerHTML = `
           <div class="ficha-head"><div>
             <h2 class="ficha-cli">${esc(ZharoCasos.clientLabel(c))}</h2>
             <div class="ficha-ag">${esc(c.agencia || "—")}</div>
-          </div>${pill(ov)}</div>
+          </div><div class="q-pills">${pill(ov)}${ZharoSeguimiento.pillHtml(c.id)}</div></div>
           <div class="ficha-dl">
             <div class="ficha-item"><div class="k">Vehículo</div><div class="v">${esc(c.vehiculo || "—")}</div></div>
             <div class="ficha-item"><div class="k">Neto pedido</div><div class="v">$ ${ZharoCasos.fmtMoney(c.neto_pedido)}</div></div>
             <div class="ficha-item"><div class="k">Plazo</div><div class="v">${esc(c.plazos || "—")}</div></div>
             <div class="ficha-item"><div class="k">Comercial</div><div class="v">${esc(c.comercial || "—")}</div></div>
           </div>
+          ${best}
           <div class="ficha-chs">${channels}</div>
+          ${segBox}
           <div class="ficha-foot">${ZharoCasos.fmtWhen(c.fecha_hora)}</div>
           ${live}`;
+        if (typeof ZharoOferta !== "undefined") ZharoOferta.wire(box, () => c);
+        const save = document.getElementById("segSave");
+        if (save) save.onclick = () => {
+          const estado = (box.querySelector("[data-seg-estado]") || {}).value || "nueva";
+          const nota = (document.getElementById("segNota") || {}).value || "";
+          const row = ZharoSeguimiento.set(c.id, { estado, nota });
+          document.getElementById("segFecha").textContent = "Último cambio: " + ZharoCasos.fmtWhen(row.fecha);
+          const headPills = box.querySelector(".ficha-head .q-pills");
+          if (headPills) headPills.innerHTML = pill(ov) + ZharoSeguimiento.pillHtml(c.id);
+          if (typeof zharoToast === "function") zharoToast("Seguimiento guardado");
+        };
       }
 
       async function enrichPdfs(c) {
@@ -122,6 +156,7 @@
         return;
       }
       c = await enrichPdfs(c);
+      try { await ZharoSeguimiento.pullGas(); } catch (_) {}
       render(c);
     });
   </script>

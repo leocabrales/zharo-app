@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/app.css?v=brand1">
-  <link rel="stylesheet" href="css/simulando.css?v=brand1">
+  <link rel="stylesheet" href="css/app.css?v=oferta1">
+  <link rel="stylesheet" href="css/simulando.css?v=oferta1">
 </head>
 <body class="sim-body">
   <div class="sim-bg" aria-hidden="true">
@@ -54,6 +54,8 @@
       </div>
     </section>
 
+    <section class="sim-best hidden" id="bestBox"></section>
+
     <section class="sim-channels" id="channels" aria-live="polite"></section>
 
     <section class="sim-footer-cta hidden" id="doneBox">
@@ -61,7 +63,8 @@
         <div class="sim-done-title">Listo</div>
         <p class="sim-done-sub">Ofertas actualizadas. Podés volver a Mis consultas o cargar otro cliente.</p>
         <div class="sim-done-actions">
-          <a class="sim-btn primary" href="casos.html">Ver mis consultas</a>
+          <button type="button" class="sim-btn primary" data-share="all">Compartir por WhatsApp</button>
+          <a class="sim-btn" href="casos.html">Ver mis consultas</a>
           <a class="sim-btn" href="cargar.html">Cargar otro</a>
           <a class="sim-btn" href="casos.html" onclick="return zhBack()">← Volver</a>
         </div>
@@ -71,9 +74,10 @@
 
   <script src="js/config.js?v=live3"></script>
   <script src="js/auth.js?v=priv1"></script>
-  <script src="js/casos.js?v=priv1"></script>
+  <script src="js/casos.js?v=oferta1"></script>
+  <script src="js/oferta.js?v=oferta1"></script>
   <script src="js/ui.js?v=live3"></script>
-  <script src="js/simulando.js?v=stop2"></script>
+  <script src="js/simulando.js?v=oferta1"></script>
 <script>
 function zhBack(){try{if(document.referrer&&new URL(document.referrer).origin===location.origin&&history.length>1){history.back();return false;}}catch(e){}return true;}
 </script>

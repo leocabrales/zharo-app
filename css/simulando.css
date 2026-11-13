@@ -241,3 +241,18 @@
 .ch.is-stop .ch-result{display:block}
 .ch.is-stop .ch-waitline,.ch.is-stop .ch-ticker{display:none}
 .ch.is-stop .ch-status{color:#cbd5e1;background:rgba(51,65,85,.5);border-color:rgba(148,163,184,.35)}
+
+.sim-best{margin:0 0 16px}
+.best-card.best-dark{background:rgba(15,23,42,.62);border:1px solid rgba(148,163,184,.18);border-radius:20px;color:#e8eefc;box-shadow:0 20px 50px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(16px)}
+.best-card.best-dark .best-kicker{color:#fecdd3}
+.best-card.best-dark .best-block{border-bottom-color:rgba(148,163,184,.2)}
+.best-card.best-dark .best-block-h{color:#94a3b8}
+.best-card.best-dark .best-neto{color:#fff}
+.best-card.best-dark .best-cuota{color:#e2e8f0}
+.best-card.best-dark .share-btn{background:#FB3449;color:#fff}
+.best-card.best-dark .share-btn-mini{background:transparent;border-color:#FB3449;color:#fecdd3}
+.best-card.best-dark .share-btn-mini:hover{background:#FB3449;color:#fff}
+.best-card.best-dark .share-pdf{color:#fecdd3}
+.share-btn-ch{background:transparent;color:#fecdd3;border:1px solid rgba(251,52,73,.5)}
+.share-btn-ch:hover{background:rgba(251,52,73,.45);color:#fff}
+.ch-actions{align-items:center}

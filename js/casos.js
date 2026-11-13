@@ -282,13 +282,16 @@ const ZharoCasos = (() => {
   }
 
   function channelResultFromLocal(ch) {
-    if (!ch || typeof ch !== "object") return { resultado: null, neto: null, plazos: null, pdf_url: null };
+    if (!ch || typeof ch !== "object") return { resultado: null, neto: null, plazos: null, pdf_url: null, options: null, primera_cuota: null };
     const state = ch.state || ch.resultado || "esperando";
     return {
       resultado: normResultado(state),
       neto: ch.neto ?? null,
       plazos: ch.plazos ?? null,
       pdf_url: ch.pdf_url || null,
+      options: Array.isArray(ch.options) ? ch.options : null,
+      primera_cuota: ch.primera_cuota ?? ch.cuota ?? null,
+      cuota_promedio: ch.cuota_promedio ?? ch.promedio ?? null,
     };
   }
 
@@ -328,6 +331,9 @@ const ZharoCasos = (() => {
         neto: ch.neto ?? null,
         plazos: ch.plazos ?? null,
         pdf_url: ch.pdf_url || null,
+        options: Array.isArray(ch.options) ? ch.options : null,
+        primera_cuota: ch.primera_cuota ?? ch.cuota ?? null,
+        cuota_promedio: ch.cuota_promedio ?? ch.promedio ?? null,
       };
     }
     const isWeb = c.source === "web" || /^[0-9a-f-]{36}$/i.test(c.id || "");
@@ -377,7 +383,10 @@ const ZharoCasos = (() => {
         const F = prev.channels[id];
         if (!F || F.resultado == null) channels[id] = L;
         else if (!L || L.resultado == null || L.resultado === "pendiente") channels[id] = F;
-        else channels[id] = L;
+        else {
+          channels[id] = { ...F, ...L, pdf_url: L.pdf_url || F.pdf_url, options: L.options || F.options,
+            primera_cuota: L.primera_cuota ?? F.primera_cuota, cuota_promedio: L.cuota_promedio ?? F.cuota_promedio };
+        }
       }
       map.set(row.id, {
         ...prev,
