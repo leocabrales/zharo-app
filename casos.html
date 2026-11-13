@@ -31,7 +31,7 @@
         <select id="fltAgencia"><option value="todas">Agencia: todas</option></select>
         <select id="fltComercial"><option value="todos">Comercial: todos</option></select>
         <select id="fltFecha"><option value="todos" selected>Fecha: todas</option><option value="hoy">Hoy</option><option value="7">7 días</option><option value="30">30 días</option></select>
-        <select id="fltCanal"><option value="cualquiera">Canal: cualquiera</option><option value="columbia">Columbia</option><option value="galicia">Galicia</option><option value="creditcar">CreditCar</option></select>
+        <select id="fltCanal"><option value="cualquiera">Canal: cualquiera</option><option value="columbia">Columbia</option><option value="galicia">Galicia</option><option value="creditcar">CreditCar</option><option value="nacion">Nación</option></select>
         <select id="fltRes"><option value="todos">Resultado: todos</option><option value="aprobado">Pre aprobado</option><option value="sujeto_analisis">Sujeto a análisis</option><option value="sin_oferta">Sin oferta</option><option value="error">Error temporal</option><option value="pendiente">Cotizando</option></select>
         <button type="button" class="ops-btn primary" id="fltSearch">Buscar</button><button type="button" class="ops-clear" id="fltClear">Limpiar</button>
       </div>
@@ -49,7 +49,7 @@
 
   <script src="js/config.js?v=gis1"></script>
   <script src="js/auth.js?v=gest4"></script>
-  <script src="js/casos.js?v=live1"></script>
+  <script src="js/casos.js?v=bna1"></script>
   <script src="js/ui.js?v=live1"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
@@ -60,7 +60,7 @@
       const $ = id => document.getElementById(id);
       const lista = $("lista"), alertBox = $("alertBox");
       const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
-      const SHORT = { columbia: "Col", galicia: "Gal", creditcar: "CC" };
+      const SHORT = { columbia: "Col", galicia: "Gal", creditcar: "CC" , nacion: "BNA" };
       const currentFilters = () => ({ canal: $("fltCanal").value, resultado: $("fltRes").value, agencia: $("fltAgencia").value, comercial: $("fltComercial").value, fecha: $("fltFecha").value });
 
       function fillSelects(casos) {
@@ -97,7 +97,8 @@
       function detailHtml(c) {
         return ZharoCasos.CHANNEL_IDS.map(id => { const ch = c.channels[id]||{}, r = ch.resultado;
           const l = r == null ? "sin dato" : ZharoCasos.stateLabel(r);
-          return `<div class="detail-ch"><b>${ZharoCasos.CHANNEL_LABEL[id]}</b> · ${l} · neto ${ch.neto != null ? ZharoCasos.fmtMoney(ch.neto) : "—"} · plazos ${esc(ch.plazos || "—")}</div>`; }).join("");
+          const neto = (id === "nacion" && ch.neto == null) ? "" : ` · neto ${ch.neto != null ? ZharoCasos.fmtMoney(ch.neto) : "—"}`;
+          return `<div class="detail-ch"><b>${ZharoCasos.CHANNEL_LABEL[id]}</b> · ${l}${neto} · plazos ${esc(ch.plazos || "—")}</div>`; }).join("");
       }
       function renderList(casos) {
         $("listCount").textContent = `Mostrando ${casos.length} ${casos.length === 1 ? "registro" : "registros"}`;
@@ -111,7 +112,7 @@
             <td>${estado(c)}</td>
             <td class="c-muted">${esc(c.comercial || "—")}</td>
             <td class="c-muted c-date">${ZharoCasos.fmtWhen(c.fecha_hora)}</td></tr>
-          ${c.href ? "" : `<tr class="ops-detail hidden" data-d="${i}"><td colspan="10">${detailHtml(c)}</td></tr>`}`).join("");
+          ${c.href ? "" : `<tr class="ops-detail hidden" data-d="${i}"><td colspan="${8 + ZharoCasos.CHANNEL_IDS.length}">${detailHtml(c)}</td></tr>`}`).join("");
         const table = `<div class="ops-tablewrap"><table class="ops-table"><thead><tr><th>Cliente</th><th>Agencia</th><th>Vehículo</th><th>Neto</th>${ZharoCasos.CHANNEL_IDS.map(id => `<th class="c-ch">${SHORT[id]}</th>`).join("")}<th>Estado</th><th>Comercial</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         const cards = `<div class="ops-cards">` + casos.map((c, i) => `<div class="ops-mcard ${c.href ? "is-link" : "is-exp"}" data-i="${i}">
             <div class="m1"><b>${esc(ZharoCasos.clientLabel(c))}</b>${estado(c)}</div>

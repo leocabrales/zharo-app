@@ -4,12 +4,14 @@
     { id: "columbia", name: "Columbia", short: "COL", wait: "Esperando oferta de Columbia…" },
     { id: "galicia", name: "Galicia", short: "GAL", wait: "Esperando oferta de Galicia…" },
     { id: "creditcar", name: "CreditCar", short: "CC", wait: "Esperando oferta de CreditCar…" },
+    { id: "nacion", name: "Nación", short: "BNA", wait: "Esperando oferta de Nación…" },
   ];
 
   const TICKERS = {
     columbia: "consulta bandas · plazos · neto agencia · sin solicitud · ",
     galicia: "scoring · oferta neta · PDF propuesta · sin bruto banco · ",
     creditcar: "evaluación · capital neto · propuesta · canal agencia · ",
+    nacion: "evaluación CUIL · oferta preliminar · plazo mínimo · sin solicitud · ",
   };
 
   const $ = (id) => document.getElementById(id);
@@ -111,7 +113,28 @@
     ];
   }
 
+  const pct = (v) => (v == null || v === "" || !Number.isFinite(Number(v)))
+    ? "—" : Number(v).toLocaleString("es-AR", { maximumFractionDigits: 2 }) + "%";
+  const cuotaFmt = (v) => (v == null || v === "" || !Number.isFinite(Number(v)))
+    ? "—" : "$ " + Number(v).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // Nación: oferta preliminar (plazo, TNA, 1° cuota). Sin montos hasta que exista la regla de neto.
+  function nacionHtml(st) {
+    const opts = Array.isArray(st?.options) ? st.options : [];
+    if (!opts.length) return "";
+    return `<div class="ch-options">${opts.map((o) => {
+      const neto = (o.neto != null && o.neto !== "")
+        ? `<div class="ch-neto"><small>NETO AGENCIA</small>${escapeHtml(money(o.neto))}</div>` : "";
+      return `<div class="ch-opt ch-opt-nacion">
+        <div><span class="ch-opt-tipo">${escapeHtml(/uva/i.test(o.tipo) ? "UVA" : "Tasa fija")}</span>
+          <div class="ch-opt-line"><b>${escapeHtml(String(o.plazo ?? "—"))} meses</b> · TNA ${escapeHtml(pct(o.tna))}</div>
+          <div class="ch-opt-line">1° cuota <b>${escapeHtml(cuotaFmt(o.primera_cuota))}</b></div></div>
+        ${neto}</div>`;
+    }).join("")}</div>`;
+  }
+
   function netoHtml(ch, st) {
+    if (ch.id === "nacion") return nacionHtml(st);
     const options = galiciaOptions(ch, st);
     if (!options) {
       return `<div class="ch-neto"><small>NETO AGENCIA</small>${escapeHtml(money(st?.neto))}</div>`;
@@ -126,6 +149,8 @@
 
   function channelHtml(ch, st) {
     const state = st?.state || "esperando";
+    // Casos anteriores a Nación (o canal no consultado): no se muestra la tarjeta.
+    if (state === "no_consultado") return "";
     const cls =
       state === "sujeto_analisis" ? "is-analisis" :
       state === "pre_aprobado" ? "is-ok" :
@@ -225,8 +250,16 @@
     const chans = remote.channels || remote;
     for (const ch of CHANNELS) {
       const r = chans[ch.id];
-      if (!r) continue;
       const cur = caso.channels[ch.id] || {};
+      const remoteDone = remote.status === "listo";
+      if (!r || (remoteDone && normalizeState(r.state || r.resultado || r.status) === "esperando")) {
+        // El caso terminó sin este canal (p.ej. cotizado antes de sumar Nación).
+        if (remoteDone && cur.state !== "no_consultado" && normalizeState(cur.state) === "esperando") {
+          caso.channels[ch.id] = { state: "no_consultado", neto: null, pdf_url: null, updated_at: null };
+          changed = true;
+        }
+        continue;
+      }
       const next = {
         state: normalizeState(r.state || r.resultado || r.status),
         neto: r.neto != null ? r.neto : cur.neto,
@@ -235,7 +268,7 @@
           ? (r.message || r.msg || null)
           : (cur.message || null),
         tip_plazos: Object.prototype.hasOwnProperty.call(r, "tip_plazos") ? (r.tip_plazos ?? null) : (cur.tip_plazos || null),
-        options: Object.prototype.hasOwnProperty.call(r, "options") ? sanitizeOptions(r.options) : (cur.options || null),
+        options: Object.prototype.hasOwnProperty.call(r, "options") ? sanitizeOptions(r.options, ch.id) : (cur.options || null),
         updated_at: r.updated_at || new Date().toISOString(),
       };
       if (channelSignature(next) !== channelSignature(cur)) {
@@ -259,12 +292,20 @@
       .trim();
   }
 
-  function sanitizeOptions(options) {
+  function sanitizeOptions(options, chId) {
     if (!Array.isArray(options)) return null;
     const out = [];
     for (const o of options) {
       if (!o || typeof o !== "object") continue;
       const tipo = String(o.tipo || o.type || "").trim();
+      if (chId === "nacion") {
+        // Solo plazo / tasas / cuota (y neto si algún día hay regla). Nunca montos del banco.
+        if (!tipo || o.plazo == null) continue;
+        const row = { tipo, plazo: o.plazo };
+        for (const k of ["tna", "tea", "cft", "primera_cuota", "neto"]) if (o[k] != null && o[k] !== "") row[k] = o[k];
+        out.push(row);
+        continue;
+      }
       if (!tipo || o.neto == null || o.neto === "") continue;
       out.push({ tipo, neto: o.neto });
     }
@@ -290,6 +331,7 @@
     if (["pre aprobado", "preaprobado", "ok", "aprobado", "oferta"].includes(v)) return "pre_aprobado";
     if (["sin oferta", "sinoferta", "no", "rechazado"].includes(v)) return "sin_oferta";
     if (["error", "err", "timeout"].includes(v)) return "error";
+    if (v === "no consultado" || v === "noconsultado") return "no_consultado";
     if (["esperando", "cotizando", "pending", "wait", "pendiente", "enviado"].includes(v)) return "esperando";
     return "esperando";
   }

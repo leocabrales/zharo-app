@@ -1,8 +1,8 @@
 /* Casos locales (localStorage) + feed público del bot + panel de gestión. */
 const ZharoCasos = (() => {
   const KEY = "zharo_casos_v1";
-  const CHANNEL_IDS = ["columbia", "galicia", "creditcar"];
-  const CHANNEL_LABEL = { columbia: "Columbia", galicia: "Galicia", creditcar: "CreditCar" };
+  const CHANNEL_IDS = ["columbia", "galicia", "creditcar", "nacion"];
+  const CHANNEL_LABEL = { columbia: "Columbia", galicia: "Galicia", creditcar: "CreditCar" , nacion: "Nación" };
   const REPEAT_THRESHOLD = 3;
 
   function uuid() {
@@ -116,12 +116,14 @@ const ZharoCasos = (() => {
     if (r === "pre aprobado" || r === "preaprobado" || r === "aprobado" || r === "listo" || r === "ok") return "pre_aprobado";
     if (r === "sin oferta" || r === "sinoferta" || r === "no" || r === "rechazado") return "sin_oferta";
     if (r === "error" || r === "err" || r === "timeout") return "error";
+    if (r === "no consultado" || r === "noconsultado") return "no_consultado";
     if (r === "esperando" || r === "pendiente" || r === "cotizando" || r === "enviado" || r === "wait") return "pendiente";
     return "pendiente";
   }
 
   function stateLabel(resultado) {
     const r = normResultado(resultado);
+    if (r === "no_consultado") return "—";
     if (r === "pre_aprobado") return "Pre aprobado";
     if (r === "sujeto_analisis") return "Sujeto a análisis";
     if (r === "sin_oferta") return "Sin oferta";
@@ -130,7 +132,7 @@ const ZharoCasos = (() => {
   }
 
   function channelResultFromLocal(ch) {
-    if (!ch || typeof ch !== "object") return { resultado: "pendiente", neto: null, plazos: null };
+    if (!ch || typeof ch !== "object") return { resultado: null, neto: null, plazos: null };
     const state = ch.state || ch.resultado || "esperando";
     return {
       resultado: normResultado(state),
@@ -236,7 +238,7 @@ const ZharoCasos = (() => {
   }
 
   function overallStatus(caso) {
-    const vals = CHANNEL_IDS.map((id) => (caso.channels[id] || {}).resultado).filter(Boolean);
+    const vals = CHANNEL_IDS.map((id) => (caso.channels[id] || {}).resultado).filter((v) => v && v !== "no_consultado");
     if (!vals.length) return "pendiente";
     if (vals.some((v) => v === "pendiente")) return "pendiente";
     if (vals.some((v) => v === "pre_aprobado")) return "pre_aprobado";
@@ -302,9 +304,10 @@ const ZharoCasos = (() => {
       let ok = 0, n = 0;
       for (const c of casos) {
         const r = (c.channels[id] || {}).resultado;
-        if (!r || r === "pendiente") continue;
+        if (!r || r === "pendiente" || r === "no_consultado") continue;
         n++;
         if (r === "pre_aprobado") ok++;
+        else if (id === "nacion" && r === "sujeto_analisis") ok++; // Nación solo da oferta preliminar
       }
       perCanal[id] = { ok, n, pct: n ? Math.round((ok / n) * 100) : null };
     }

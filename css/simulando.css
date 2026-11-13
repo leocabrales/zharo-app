@@ -122,6 +122,7 @@
 .ch[data-ch="columbia"] .ch-ico{background:linear-gradient(145deg,#1e3a8a,#312e81);color:#c7d2fe}
 .ch[data-ch="galicia"] .ch-ico{background:linear-gradient(145deg,#7f1d1d,#9a3412);color:#fecaca}
 .ch[data-ch="creditcar"] .ch-ico{background:linear-gradient(145deg,#064e3b,#115e59);color:#a7f3d0}
+.ch[data-ch="nacion"] .ch-ico{background:linear-gradient(145deg,#0c4a6e,#0e7490);color:#a5f3fc;font-size:11px}
 
 .ch-status{
   font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
@@ -178,6 +179,8 @@
 }
 .ch-opt-tipo{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#93c5fd;padding-bottom:4px}
 .ch-opt .ch-neto{font-size:22px;text-align:right}
+.ch-opt-line{font-size:14px;color:#e2e8f0;line-height:1.45}
+.ch-opt-line b{font-family:"JetBrains Mono",ui-monospace,monospace;color:#f8fafc}
 .ch-tip{
   margin:12px 0 0;padding:10px 12px;border-radius:12px;
   background:rgba(120,53,15,.38);border:1px solid rgba(251,191,36,.28);
