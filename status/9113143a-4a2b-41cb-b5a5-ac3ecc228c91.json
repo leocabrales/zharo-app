@@ -1,6 +1,6 @@
 {
   "case_id": "9113143a-4a2b-41cb-b5a5-ac3ecc228c91",
-  "updated_at": "2026-11-13T15:31:24-03:00",
+  "updated_at": "2026-11-13T15:31:30-03:00",
   "status": "cotizando",
   "channels": {
     "columbia": {
@@ -18,11 +18,11 @@
       "updated_at": "2026-11-13T15:31:24-03:00"
     },
     "creditcar": {
-      "state": "esperando",
+      "state": "sin_oferta",
       "neto": null,
       "pdf_url": null,
       "message": null,
-      "updated_at": null
+      "updated_at": "2026-11-13T15:31:30-03:00"
     },
     "nacion": {
       "state": "esperando",
