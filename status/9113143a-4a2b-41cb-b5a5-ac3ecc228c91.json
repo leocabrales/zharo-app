@@ -1,6 +1,6 @@
 {
   "case_id": "9113143a-4a2b-41cb-b5a5-ac3ecc228c91",
-  "updated_at": "2026-11-13T15:34:02-03:00",
+  "updated_at": "2026-11-13T15:34:23-03:00",
   "status": "listo",
   "channels": {
     "columbia": {
@@ -25,11 +25,11 @@
       "updated_at": "2026-11-13T15:31:30-03:00"
     },
     "nacion": {
-      "state": "error",
+      "state": "sin_oferta",
       "neto": null,
       "pdf_url": null,
-      "message": "No se pudo consultar Nación. Reintentá más tarde.",
-      "updated_at": "2026-11-13T15:34:02-03:00",
+      "message": null,
+      "updated_at": "2026-11-13T15:34:23-03:00",
       "options": null
     }
   }
