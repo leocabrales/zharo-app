@@ -32,8 +32,12 @@ const ZharoOferta = (() => {
 
   function num(v) {
     if (v == null || v === "") return null;
-    if (typeof v === "string" && /m[aá]ximo/i.test(v)) return null;
-    const n = typeof v === "number" ? v : Number(String(v).replace(/\./g, "").replace(",", "."));
+    if (typeof v === "number") return Number.isFinite(v) ? v : null;
+    let s = String(v).trim().replace(/[$\s]/g, "");
+    if (!s || /m[aá]ximo/i.test(s)) return null;
+    if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+    const n = Number(s);
     return Number.isFinite(n) ? n : null;
   }
 
@@ -142,8 +146,9 @@ const ZharoOferta = (() => {
   }
 
   function fmtCuota(n) {
-    if (n == null) return "—";
-    return "$ " + Number(n).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const v = num(n);
+    if (v == null) return "—";
+    return "$ " + v.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function cuotaCaption(o) {
@@ -262,7 +267,8 @@ const ZharoOferta = (() => {
     return `<button type="button" class="share-btn ${extraClass || ""}" data-share="${esc(id)}">${lab}</button>`;
   }
 
-  function cardHtml(caso, theme) {
+  function cardHtml(caso, theme, opts) {
+    opts = opts || {};
     const best = bestOption(caso);
     if (!best.offers.length) return "";
     const block = (title, o) => {
@@ -290,7 +296,7 @@ const ZharoOferta = (() => {
     return `<div class="best-card ${theme || ""}">
       <div class="best-kicker">Mejor opción</div>
       ${body}
-      <div class="best-share">${shareBtn("all")}${typeof ZharoPrefill !== "undefined" ? ` <a class="share-btn share-btn-mini" href="cargar.html" data-prefill="otro_monto">¿Otro monto?</a>` : ""}</div>
+      <div class="best-share">${shareBtn("all")}${(typeof ZharoPrefill !== "undefined" && !opts.hideOtroMonto) ? ` <a class="share-btn share-btn-mini" href="cargar.html" data-prefill="otro_monto">¿Otro monto?</a>` : ""}</div>
     </div>`;
   }
 

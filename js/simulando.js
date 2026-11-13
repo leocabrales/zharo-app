@@ -15,10 +15,16 @@
   };
 
   const $ = (id) => document.getElementById(id);
+  const parseAmt = (v) => {
+    if (typeof ZharoOferta !== "undefined" && ZharoOferta.num) return ZharoOferta.num(v);
+    if (v == null || v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
   const money = (n) => {
     if (n == null || n === "" || n === "máximo") return "—";
-    const num = Number(String(n).replace(/\D/g, "")) || Number(n);
-    if (!Number.isFinite(num)) return String(n);
+    const num = parseAmt(n);
+    if (num == null) return String(n);
     return "$ " + num.toLocaleString("es-AR");
   };
 
@@ -115,8 +121,11 @@
 
   const pct = (v) => (v == null || v === "" || !Number.isFinite(Number(v)))
     ? "—" : Number(v).toLocaleString("es-AR", { maximumFractionDigits: 2 }) + "%";
-  const cuotaFmt = (v) => (v == null || v === "" || !Number.isFinite(Number(v)))
-    ? "—" : "$ " + Number(v).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const cuotaFmt = (v) => {
+    const n = parseAmt(v);
+    if (n == null) return "—";
+    return "$ " + n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   // Nación: neto agencia, total financiado y 1° cuota por plazo (sin seguro). Nunca gasto ni costo.
   function nacionHtml(st) {

@@ -47,7 +47,7 @@
   <script src="js/config.js?v=gis1"></script>
   <script src="js/auth.js?v=priv1"></script>
   <script src="js/casos.js?v=oferta1"></script>
-  <script src="js/oferta.js?v=feat2"></script>
+  <script src="js/oferta.js?v=feat2b"></script>
   <script src="js/prefill.js?v=feat2"></script>
   <script src="js/requisitos.js?v=feat2"></script>
   <script src="js/seguimiento.js?v=oferta1"></script>
@@ -99,7 +99,7 @@
           return `<div class="ficha-ch"><div class="ficha-ch-top"><b>${esc(ZharoCasos.CHANNEL_LABEL[id])}</b>${pill(r)}</div>${extra}${plazos}${req}</div>`;
         }).join("");
         const live = c.href ? `<a class="ficha-live" href="${esc(c.href)}">Ver cotización en vivo</a>` : "";
-        const best = (typeof ZharoOferta !== "undefined") ? ZharoOferta.cardHtml(c, "") : "";
+        const best = (typeof ZharoOferta !== "undefined") ? ZharoOferta.cardHtml(c, "", { hideOtroMonto: true }) : "";
         const seg = ZharoSeguimiento.get(c.id);
         const segFecha = seg.fecha ? `Último cambio: ${ZharoCasos.fmtWhen(seg.fecha)}` : "Todavía no hubo un cambio de estado.";
         const segBox = `<div class="seg-box">
