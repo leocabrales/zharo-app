@@ -229,3 +229,6 @@
   .ch,.ch-scan,.sim-pulse-dot,.sim-progress-bar,.ch-ticker span,.ch.is-wait::before{animation:none !important}
   .ch{opacity:1;transform:none}
 }
+
+.sim-top{position:sticky;top:0;z-index:20;padding:10px 0;background:linear-gradient(#050b18 70%,rgba(5,11,24,0));}
+.sim-back{font-weight:600}

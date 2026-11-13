@@ -27,7 +27,7 @@
           <div class="sim-live" id="liveBadge"><span class="sim-pulse-dot"></span><span id="liveLabel">COTIZANDO EN VIVO</span></div>
         </div>
       </div>
-      <a class="sim-back" href="casos.html">Mis casos</a>
+      <a class="sim-back" href="casos.html" onclick="return zhBack()">← Volver</a>
     </header>
 
     <section class="sim-client glass" id="clientCard">
@@ -49,6 +49,7 @@
         <div class="sim-done-actions">
           <a class="sim-btn primary" href="casos.html">Ver mis casos</a>
           <a class="sim-btn" href="cargar.html">Cargar otro</a>
+          <a class="sim-btn" href="casos.html" onclick="return zhBack()">← Volver</a>
         </div>
       </div>
     </section>
@@ -59,5 +60,8 @@
   <script src="js/casos.js?v=bna1"></script>
   <script src="js/ui.js?v=live3"></script>
   <script src="js/simulando.js?v=bna2"></script>
+<script>
+function zhBack(){try{if(document.referrer&&new URL(document.referrer).origin===location.origin&&history.length>1){history.back();return false;}}catch(e){}return true;}
+</script>
 </body>
 </html>
