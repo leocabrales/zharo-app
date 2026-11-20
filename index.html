@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="theme-color" content="#FB3449">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="shortcut icon" href="assets/favicon.ico">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ZHARO">
+
+  <title>ZHARO · Aprobado directo</title>
+  <link rel="stylesheet" href="css/app.css?v=brand1">
+  <link rel="stylesheet" href="css/login.css?v=brand1">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="login-body">
+  <div class="login-bg" aria-hidden="true">
+    <div class="login-grid"></div>
+    <div class="login-orb login-orb-a"></div>
+    <div class="login-orb login-orb-b"></div>
+    <div class="login-orb login-orb-c"></div>
+  </div>
+
+  <div class="login-wrap">
+    <div id="devBanner" class="login-dev hidden"></div>
+
+    <header class="login-brand">
+      <img class="login-logo" src="assets/zaro_logo_blanco.png" alt="ZARO">
+      <div class="login-kicker">Aprobado directo</div>
+      <p class="login-sub">Cargá el cliente, elegí el auto y cotizá en vivo. Ofertas por canal, en una sola pantalla.</p>
+      <div class="login-live"><span class="login-pulse"></span> Terminal comercial</div>
+    </header>
+
+    <div class="login-card" id="loginCard">
+      <h2>Entrar</h2>
+      <p class="hint">Solo mails autorizados. Después se puede abrir el dominio @zharo.</p>
+      <div id="g_btn_wrap"></div>
+      <div class="login-actions">
+        <button class="login-btn login-btn-primary" type="button" id="btnDev">Entrar en modo prueba</button>
+        <a class="login-btn login-btn-ghost" href="config.html">Configuración</a>
+      </div>
+    </div>
+
+    <div class="login-card hidden" id="homeCard">
+      <div class="login-userbar" id="userbar"></div>
+      <h2>Hola</h2>
+      <p class="hint">Elegí qué querés hacer.</p>
+      <div class="login-nav">
+        <a class="login-btn login-btn-primary" href="cargar.html"><span class="ico">📝</span> Cargar cliente</a>
+        <a class="login-btn login-btn-soft" href="casos.html"><span class="ico">📋</span> Mis consultas</a>
+        <a class="login-btn login-btn-ghost" href="config.html"><span class="ico">⚙️</span> Configuración</a>
+      </div>
+    </div>
+
+    <p class="login-foot">ZHARO · cotización en vivo</p>
+  </div>
+
+  <script src="js/config.js?v=priv2"></script>
+  <script src="js/auth.js?v=priv2"></script>
+  <script src="js/ui.js?v=priv2"></script>
+  <script>
+    async function boot() {
+      await ZharoAuth.loadAllow();
+      if (ZharoConfig.isDev()) {
+        const b = document.getElementById("devBanner");
+        b.textContent = "MODO PRUEBA — sin Google real. Solo para Leo.";
+        b.classList.remove("hidden");
+      }
+      const u = ZharoAuth.currentUser();
+      if (u && ZharoAuth.isAllowed(u.email)) {
+        document.getElementById("loginCard").classList.add("hidden");
+        document.getElementById("homeCard").classList.remove("hidden");
+        zharoPaintChrome("home");
+        const q = new URLSearchParams(location.search);
+        const next = q.get("next");
+        if (next && /^(cargar|casos|config)\.html$/.test(next)) location.href = next;
+        return;
+      }
+      function tryBtn() {
+        if (window.google && google.accounts) ZharoAuth.initGoogleButton("g_btn_wrap");
+        else setTimeout(tryBtn, 200);
+      }
+      tryBtn();
+      const btnDev = document.getElementById("btnDev");
+      if (btnDev) btnDev.remove();                       // modo prueba desactivado
+      const _devOff = () => {
+        ZharoConfig.set("devMode", "1");
+        ZharoAuth.enterDev();
+        document.getElementById("loginCard").classList.add("hidden");
+        document.getElementById("homeCard").classList.remove("hidden");
+        const b = document.getElementById("devBanner");
+        b.textContent = "MODO PRUEBA — sin Google real. Solo para Leo.";
+        b.classList.remove("hidden");
+        zharoPaintChrome("home");
+      };
+    }
+    document.addEventListener("DOMContentLoaded", boot);
+  </script>
+</body>
+</html>

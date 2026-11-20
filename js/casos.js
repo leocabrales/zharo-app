@@ -1,0 +1,587 @@
+/* Casos locales (localStorage) + feed público del bot + panel de gestión. */
+const ZharoCasos = (() => {
+  const KEY = "zharo_casos_v1";
+  const CHANNEL_IDS = ["columbia", "galicia", "creditcar", "nacion"];
+  const ORPHAN_KEY = KEY + ":_orphan";
+
+  function normEmail(email) {
+    return String(email || "").trim().toLowerCase();
+  }
+
+  function currentEmail() {
+    try {
+      const u = JSON.parse(localStorage.getItem((typeof ZharoConfig !== "undefined" && ZharoConfig.KEYS && ZharoConfig.KEYS.user) || "zharo_user") || "null");
+      return normEmail(u && u.email);
+    } catch { return ""; }
+  }
+
+  function keyFor(email) {
+    const e = normEmail(email);
+    return e ? KEY + ":" + e : KEY;
+  }
+
+  function readKey(k) {
+    try { return JSON.parse(localStorage.getItem(k) || "[]"); } catch { return []; }
+  }
+
+  function writeKey(k, arr) {
+    localStorage.setItem(k, JSON.stringify((arr || []).slice(0, 100)));
+  }
+
+  function mergeById(into, extra) {
+    const map = new Map();
+    for (const c of into || []) if (c && c.id) map.set(c.id, c);
+    for (const c of extra || []) {
+      if (!c || !c.id) continue;
+      const prev = map.get(c.id);
+      map.set(c.id, prev ? { ...prev, ...c } : c);
+    }
+    return Array.from(map.values());
+  }
+
+  function migrateLegacy(email) {
+    const legacy = readKey(KEY);
+    if (!Array.isArray(legacy) || !legacy.length) return;
+    const buckets = {};
+    const orphan = [];
+    for (const c of legacy) {
+      const e = normEmail(c && c.email);
+      if (e) {
+        (buckets[e] ||= []).push(c);
+      } else {
+        orphan.push(c);
+      }
+    }
+    for (const [e, arr] of Object.entries(buckets)) {
+      writeKey(keyFor(e), mergeById(readKey(keyFor(e)), arr));
+    }
+    if (orphan.length) writeKey(ORPHAN_KEY, mergeById(readKey(ORPHAN_KEY), orphan));
+    localStorage.removeItem(KEY);
+  }
+
+  const CHANNEL_LABEL = { columbia: "Columbia", galicia: "Galicia", creditcar: "CreditCar" , nacion: "Nación" };
+  const REPEAT_THRESHOLD = 3;
+
+  function uuid() {
+    if (crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "c_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
+  }
+
+  function emptyChannels() {
+    const o = {};
+    for (const id of CHANNEL_IDS) {
+      o[id] = { state: "esperando", neto: null, pdf_url: null, updated_at: null };
+    }
+    return o;
+  }
+
+  function list(email) {
+    const e = normEmail(email === undefined ? currentEmail() : email);
+    migrateLegacy(e);
+    const mine = e ? readKey(keyFor(e)) : [];
+    // Casos viejos sin email: solo el admin los ve en este dispositivo.
+    const admin = (typeof ZharoAuth !== "undefined" && ZharoAuth.isAdmin) ? ZharoAuth.isAdmin(e) : false;
+    return admin ? mergeById(mine, readKey(ORPHAN_KEY)) : mine;
+  }
+  function save(arr, email) {
+    const e = normEmail(email === undefined ? currentEmail() : email);
+    migrateLegacy(e);
+    writeKey(e ? keyFor(e) : KEY, (arr || []).slice(0, 100));
+    try {
+      const bc = new BroadcastChannel("zharo_casos");
+      bc.postMessage({ type: "casos_updated" });
+      bc.close();
+    } catch {}
+  }
+  function get(id) {
+    return list().find((c) => c.id === id) || null;
+  }
+  function add(caso) {
+    const email = normEmail(caso.email || currentEmail());
+    const arr = readKey(email ? keyFor(email) : KEY);
+    const row = {
+      ...caso,
+      email: email || caso.email || "",
+      id: caso.id || uuid(),
+      createdAt: caso.createdAt || new Date().toISOString(),
+      status: caso.status || "cotizando",
+      channels: (caso.channels && typeof caso.channels === "object") ? caso.channels : emptyChannels(),
+    };
+    const prev = arr.findIndex((c) => c.id === row.id);
+    if (prev >= 0) arr.splice(prev, 1);
+    arr.unshift(row);
+    save(arr, email);
+    try {
+      const bc = new BroadcastChannel("zharo_casos");
+      bc.postMessage({ type: "case", id: row.id });
+      bc.close();
+    } catch {}
+    return arr[0];
+  }
+  function update(id, patch) {
+    const email = currentEmail();
+    const candidates = [];
+    if (email) candidates.push({ key: keyFor(email), email });
+    if (typeof ZharoAuth !== "undefined" && ZharoAuth.isAdmin && ZharoAuth.isAdmin(email)) {
+      candidates.push({ key: ORPHAN_KEY, email: null });
+    }
+    candidates.push({ key: KEY, email: "" });
+    for (const cand of candidates) {
+      const arr = readKey(cand.key);
+      const i = arr.findIndex((c) => c.id === id);
+      if (i < 0) continue;
+      arr[i] = { ...arr[i], ...patch, updatedAt: new Date().toISOString() };
+      if (cand.email == null) writeKey(cand.key, arr);
+      else save(arr, cand.email);
+      try {
+        const bc = new BroadcastChannel("zharo_casos");
+        bc.postMessage({ type: "case", id });
+        bc.close();
+      } catch {}
+      return arr[i];
+    }
+    return null;
+  }
+  function mine(email) {
+    return list(email);
+  }
+
+  function statusBase() {
+    const base = (typeof ZharoConfig !== "undefined" && ZharoConfig.get)
+      ? ZharoConfig.get("statusBaseUrl")
+      : "https://raw.githubusercontent.com/leocabrales/zharo-app/main/status";
+    return String(base).replace(/\/$/, "");
+  }
+
+  function feedUrl() {
+    return statusBase() + "/casos_feed.json";
+  }
+
+  function adminFeedUrl() {
+    return statusBase() + "/casos_feed_admin.json";
+  }
+
+  function idToken() {
+    try {
+      const u = (typeof ZharoAuth !== "undefined" && ZharoAuth.currentUser) ? ZharoAuth.currentUser() : null;
+      if (!u || !u.id_token) return "";
+      if (u.exp && (Number(u.exp) * 1000) < Date.now() + 15000) return "";
+      return u.id_token;
+    } catch { return ""; }
+  }
+
+  async function fetchGasFeed() {
+    const token = idToken();
+    if (!token || typeof ZharoConfig === "undefined" || !ZharoConfig.fetchLiveJson) return null;
+    try {
+      const exec = await (ZharoConfig.gasExecUrl ? ZharoConfig.gasExecUrl(false) : "");
+      if (!exec) return null;
+      const u = new URL(exec);
+      u.searchParams.set("action", "casos_feed");
+      u.searchParams.set("id_token", token);
+      u.searchParams.set("t", String(Date.now()));
+      const r = await fetch(u.toString(), { method: "GET", cache: "no-store", mode: "cors", credentials: "omit", redirect: "follow" });
+      if (!r.ok) return null;
+      const data = await r.json();
+      if (!data || data.ok !== true || data.scoped !== true || !Array.isArray(data.casos)) return null;
+      return data;
+    } catch { return null; }
+  }
+
+  async function fetchJsonFeed(url) {
+    const got = (typeof ZharoConfig !== "undefined" && ZharoConfig.fetchLiveJson)
+      ? await ZharoConfig.fetchLiveJson(url)
+      : { ok: false };
+    if (!got.ok || !got.json) {
+      return { casos: [], updated_at: null, count: 0, error: got.missing ? "404" : "fetch", notModified: !!got.notModified };
+    }
+    const data = got.json;
+    const casos = Array.isArray(data.casos) ? data.casos : [];
+    return {
+      casos,
+      updated_at: data.updated_at || null,
+      count: data.count || casos.length,
+      notModified: !!got.notModified,
+      privacy: data.privacy || "",
+    };
+  }
+
+  async function fetchFeed(user) {
+    const email = normEmail((user && user.email) || currentEmail());
+    const admin = (typeof ZharoAuth !== "undefined" && ZharoAuth.isAdmin) ? ZharoAuth.isAdmin(email) : false;
+    try {
+      const gas = await fetchGasFeed();
+      if (gas) {
+        return {
+          casos: gas.casos,
+          updated_at: gas.updated_at || null,
+          count: gas.count || gas.casos.length,
+          notModified: false,
+          via: "gas",
+        };
+      }
+      if (admin) {
+        const feed = await fetchJsonFeed(adminFeedUrl());
+        feed.via = feed.error ? "admin-error" : "admin";
+        return feed;
+      }
+      // Comercial: el JSON público ya no lista consultas (privacidad).
+      // Hasta que el GAS con scoped=true esté redeployed, el listado sale de este dispositivo.
+      const stub = await fetchJsonFeed(feedUrl());
+      return {
+        casos: [],
+        updated_at: stub.updated_at || null,
+        count: 0,
+        notModified: stub.notModified,
+        via: "local",
+        error: stub.error,
+      };
+    } catch (e) {
+      console.warn("casos_feed", e);
+      return { casos: [], updated_at: null, count: 0, error: String(e.message || e), notModified: false };
+    }
+  }
+
+  function foldState(raw) {
+    return String(raw || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/_/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // Observado, a revisar y notas de score no son una oferta: quedan pendientes.
+  function normResultado(raw) {
+    const r = foldState(raw);
+    if (!r) return "pendiente";
+    if (r === "sujeto a analisis" || r === "sujeto analisis" || r === "sujetoanalisis") return "sujeto_analisis";
+    if (r === "pre aprobado" || r === "preaprobado" || r === "aprobado" || r === "listo" || r === "ok") return "pre_aprobado";
+    if (r === "sin oferta" || r === "sinoferta" || r === "no" || r === "rechazado") return "sin_oferta";
+    if (r === "error" || r === "err" || r === "timeout") return "error";
+    if (r === "no consultado" || r === "noconsultado") return "no_consultado";
+    if (r === "sin consultar" || r === "sinconsultar") return "sin_consultar";
+    if (r === "no cotizado" || r === "nocotizado") return "no_cotizado";
+    if (r === "dni no coincide" || r === "detenido") return "dni_no_coincide";
+    if (r === "esperando" || r === "pendiente" || r === "cotizando" || r === "enviado" || r === "wait") return "pendiente";
+    return "pendiente";
+  }
+
+  function stateLabel(resultado) {
+    const r = normResultado(resultado);
+    if (r === "no_consultado") return "—";
+    if (r === "no_cotizado") return "No cotizado";
+    if (r === "dni_no_coincide") return "DNI no coincide";
+    if (r === "sin_consultar") return "Sin consultar";
+    if (r === "pre_aprobado") return "Pre aprobado";
+    if (r === "sujeto_analisis") return "Sujeto a análisis";
+    if (r === "sin_oferta") return "Sin oferta";
+    if (r === "error") return "Error temporal";
+    return "Cotizando";
+  }
+
+  function channelResultFromLocal(ch) {
+    if (!ch || typeof ch !== "object") return { resultado: null, neto: null, plazos: null, pdf_url: null, options: null, primera_cuota: null };
+    const state = ch.state || ch.resultado || "esperando";
+    return {
+      resultado: normResultado(state),
+      neto: ch.neto ?? null,
+      plazos: ch.plazos ?? null,
+      pdf_url: ch.pdf_url || null,
+      options: Array.isArray(ch.options) ? ch.options : null,
+      primera_cuota: ch.primera_cuota ?? ch.cuota ?? null,
+      cuota_promedio: ch.cuota_promedio ?? ch.promedio ?? null,
+    };
+  }
+
+  function fromLocal(c) {
+    const channels = {};
+    for (const id of CHANNEL_IDS) {
+      channels[id] = channelResultFromLocal((c.channels || {})[id]);
+    }
+    const when = c.createdAt || c.fecha_hora || c.updatedAt || null;
+    return {
+      id: c.id,
+      fecha_hora: when,
+      comercial: c.comercial || (c.email ? String(c.email).split("@")[0] : "Web"),
+      agencia: c.agencia || "",
+      vehiculo: c.auto || c.vehiculo || "",
+      neto_pedido: c.neto ?? c.neto_pedido ?? null,
+      plazos: c.plazo != null ? String(c.plazo) : (c.plazos || null),
+      dni_tail: c.dni ? String(c.dni).replace(/\D/g, "").slice(-3) : null,
+      source: "web",
+      origin: "local",
+      nombre: c.nombre || null,
+      dni: c.dni || null,
+      status: c.status || null,
+      case_state: c.case_state || null,
+      href: "simulando.html?id=" + encodeURIComponent(c.id),
+      channels,
+      _raw: c,
+    };
+  }
+
+  function fromFeed(c) {
+    const channels = {};
+    for (const id of CHANNEL_IDS) {
+      const ch = (c.channels || {})[id] || {};
+      channels[id] = {
+        resultado: ch.resultado ? normResultado(ch.resultado) : null,
+        neto: ch.neto ?? null,
+        plazos: ch.plazos ?? null,
+        pdf_url: ch.pdf_url || null,
+        options: Array.isArray(ch.options) ? ch.options : null,
+        primera_cuota: ch.primera_cuota ?? ch.cuota ?? null,
+        cuota_promedio: ch.cuota_promedio ?? ch.promedio ?? null,
+      };
+    }
+    const isWeb = c.source === "web" || /^[0-9a-f-]{36}$/i.test(c.id || "");
+    return {
+      id: c.id,
+      fecha_hora: c.fecha_hora,
+      comercial: c.comercial || "—",
+      agencia: c.agencia || "",
+      vehiculo: c.vehiculo || "",
+      neto_pedido: c.neto_pedido ?? null,
+      plazos: c.plazos || null,
+      dni_tail: c.dni_tail || null,
+      source: c.source || "csv",
+      origin: "feed",
+      nombre: null,
+      dni: null,
+      status: null,
+      case_state: c.case_state || null,
+      href: isWeb ? ("simulando.html?id=" + encodeURIComponent(c.id)) : null,
+      channels,
+      _raw: c,
+    };
+  }
+
+  function isStoppedCase(c) {
+    const raw = c._raw || {};
+    return !!(c.case_state || raw.case_state || raw.status === "detenido" || c.status === "detenido");
+  }
+
+  function mergeCases(localArr, feedArr) {
+    const map = new Map();
+    for (const f of feedArr) {
+      const row = fromFeed(f);
+      map.set(row.id, row);
+    }
+    for (const loc of localArr) {
+      const row = fromLocal(loc);
+      const prev = map.get(row.id);
+      if (!prev) {
+        map.set(row.id, row);
+        continue;
+      }
+      // Prefer local richness (nombre/dni/href) but keep feed channel fill if local empty
+      const channels = { ...prev.channels };
+      for (const id of CHANNEL_IDS) {
+        const L = row.channels[id];
+        const F = prev.channels[id];
+        if (!F || F.resultado == null) channels[id] = L;
+        else if (!L || L.resultado == null || L.resultado === "pendiente") channels[id] = F;
+        else {
+          channels[id] = { ...F, ...L, pdf_url: L.pdf_url || F.pdf_url, options: L.options || F.options,
+            primera_cuota: L.primera_cuota ?? F.primera_cuota, cuota_promedio: L.cuota_promedio ?? F.cuota_promedio };
+        }
+      }
+      map.set(row.id, {
+        ...prev,
+        ...row,
+        channels,
+        nombre: row.nombre || prev.nombre,
+        dni: row.dni || null,
+        href: row.href || prev.href,
+        case_state: row.case_state || prev.case_state || null,
+        origin: "local+feed",
+      });
+    }
+    // DNI que no coincide (caso detenido) no es un caso: no aparece en Mis consultas.
+    return Array.from(map.values()).filter((c) => !isStoppedCase(c)).sort((a, b) => {
+      const ta = Date.parse(a.fecha_hora) || 0;
+      const tb = Date.parse(b.fecha_hora) || 0;
+      return tb - ta;
+    });
+  }
+
+  function overallStatus(caso) {
+    if (caso.case_state === "dni_no_coincide") return "dni_no_coincide";
+    const vals = CHANNEL_IDS.map((id) => (caso.channels[id] || {}).resultado).filter((v) => v && v !== "no_consultado" && v !== "sin_consultar");
+    if (!vals.length) return "pendiente";
+    if (vals.some((v) => v === "pendiente")) return "pendiente";
+    if (vals.some((v) => v === "pre_aprobado")) return "pre_aprobado";
+    if (vals.some((v) => v === "sujeto_analisis")) return "sujeto_analisis";
+    if (vals.every((v) => v === "error")) return "error";
+    return "sin_oferta";
+  }
+
+  function parseFecha(s) {
+    if (!s) return null;
+    const t = Date.parse(s);
+    if (!Number.isNaN(t)) return new Date(t);
+    // "2026-10-27 14:03" Buenos Aires local → treat as local
+    const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
+    if (m) {
+      return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+    }
+    return null;
+  }
+
+  function inDateRange(caso, range) {
+    if (!range || range === "todos") return true;
+    const d = parseFecha(caso.fecha_hora);
+    if (!d) return range === "todos";
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    if (range === "hoy") return d >= start;
+    if (range === "7") {
+      const x = new Date(start); x.setDate(x.getDate() - 7); return d >= x;
+    }
+    if (range === "30") {
+      const x = new Date(start); x.setDate(x.getDate() - 30); return d >= x;
+    }
+    return true;
+  }
+
+  function applyFilters(casos, f) {
+    return casos.filter((c) => {
+      if (!inDateRange(c, f.fecha)) return false;
+      if (f.agencia && f.agencia !== "todas" && c.agencia !== f.agencia) return false;
+      if (f.comercial && f.comercial !== "todos") {
+        if (String(c.comercial || "") !== f.comercial) return false;
+      }
+      const canal = f.canal && f.canal !== "cualquiera" ? f.canal : null;
+      const res = f.resultado && f.resultado !== "todos" ? f.resultado : null;
+      if (canal) {
+        const ch = c.channels[canal] || {};
+        const r = ch.resultado;
+        if (r == null) return false;
+        if (res) return matchResultado(r, res);
+        return true;
+      }
+      if (res) return matchResultado(overallStatus(c), res);
+      return true;
+    });
+  }
+
+  function computeStats(casos) {
+    const total = casos.length;
+    const perCanal = {};
+    for (const id of CHANNEL_IDS) {
+      let ok = 0, n = 0;
+      for (const c of casos) {
+        const r = (c.channels[id] || {}).resultado;
+        if (!r || r === "pendiente" || r === "no_consultado" || r === "sin_consultar" || r === "no_cotizado") continue;
+        n++;
+        if (r === "pre_aprobado") ok++;
+        else if (id === "nacion" && r === "sujeto_analisis") ok++; // Nación solo da oferta preliminar
+      }
+      perCanal[id] = { ok, n, pct: n ? Math.round((ok / n) * 100) : null };
+    }
+    let overallOk = 0;
+    for (const c of casos) {
+      if (overallStatus(c) === "pre_aprobado") overallOk++;
+    }
+    const agCount = {};
+    for (const c of casos) {
+      const a = c.agencia || "—";
+      agCount[a] = (agCount[a] || 0) + 1;
+    }
+    const topAgencias = Object.entries(agCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([nombre, n]) => ({ nombre, n }));
+
+    return {
+      total,
+      aprobPct: total ? Math.round((overallOk / total) * 100) : 0,
+      aprobCount: overallOk,
+      perCanal,
+      topAgencias,
+    };
+  }
+
+  function repeatAlerts(casos, threshold = REPEAT_THRESHOLD) {
+    const keyCount = {};
+    for (const c of casos) {
+      const k = `${c.comercial || "—"}||${c.agencia || "—"}`;
+      if (!keyCount[k]) keyCount[k] = { comercial: c.comercial || "—", agencia: c.agencia || "—", n: 0 };
+      keyCount[k].n++;
+    }
+    return Object.values(keyCount)
+      .filter((x) => x.n >= threshold)
+      .sort((a, b) => b.n - a.n);
+  }
+
+  function uniqueValues(casos, field) {
+    const s = new Set();
+    for (const c of casos) {
+      const v = (c[field] || "").trim();
+      if (v) s.add(v);
+    }
+    return Array.from(s).sort((a, b) => a.localeCompare(b, "es"));
+  }
+
+  function fmtMoney(n) {
+    if (n == null || n === "") return "—";
+    if (typeof n === "string" && /m[aá]ximo/i.test(n)) return "máximo";
+    const num = Number(n);
+    if (Number.isNaN(num)) return String(n);
+    return num.toLocaleString("es-AR", { maximumFractionDigits: 0 });
+  }
+
+  function fmtWhen(s) {
+    const d = parseFecha(s);
+    if (!d) return s || "—";
+    return d.toLocaleString("es-AR", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  function clientLabel(c) {
+    if (c.nombre) {
+      const dni = c.dni ? ` · DNI ${c.dni}` : (c.dni_tail ? ` · …${c.dni_tail}` : "");
+      return `${c.nombre}${dni}`;
+    }
+    if (c.dni_tail) return `Cliente …${c.dni_tail}`;
+    return c.source === "web" ? "Caso web" : "Consulta bot";
+  }
+
+  function matchResultado(r, res) {
+    if (res === "aprobado" || res === "pre_aprobado") return r === "pre_aprobado";
+    if (res === "sujeto_analisis") return r === "sujeto_analisis";
+    if (res === "sin_oferta") return r === "sin_oferta";
+    if (res === "error") return r === "error";
+    if (res === "sin_consultar") return r === "sin_consultar";
+    if (res === "pendiente" || res === "cotizando") return r === "pendiente";
+    return true;
+  }
+
+  function pillClass(resultado) {
+    const r = normResultado(resultado);
+    if (r === "pre_aprobado") return "ok";
+    if (r === "sujeto_analisis") return "review";
+    if (r === "error" || r === "dni_no_coincide") return "err";
+    if (r === "sin_oferta" || r === "no_cotizado") return "no";
+    if (r === "sin_consultar" || r === "no_consultado") return "void";
+    return "wait";
+  }
+
+  function pillLabel(resultado) {
+    return stateLabel(resultado);
+  }
+
+  return {
+    list, add, get, update, mine, emptyChannels, CHANNEL_IDS, CHANNEL_LABEL,
+    REPEAT_THRESHOLD, fetchFeed, mergeCases, applyFilters, computeStats,
+    repeatAlerts, uniqueValues, overallStatus, fmtMoney, fmtWhen, clientLabel,
+    pillClass, pillLabel, stateLabel, normResultado, feedUrl, adminFeedUrl,
+    keyFor, currentEmail, normEmail,
+  };
+})();

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="theme-color" content="#FB3449">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="shortcut icon" href="assets/favicon.ico">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ZHARO">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>ZHARO · Mis consultas</title>
+  <link rel="stylesheet" href="css/app.css?v=feat2">
+</head>
+<body>
+    <header class="app-bar">
+      <div class="app-bar-inner wrap-wide">
+        <div class="brand">
+          <a href="index.html" class="brand-link"><img src="assets/zaro_logo_blanco.png" alt="ZARO" class="brand-logo"></a>
+          <div class="tag">Gestión y seguimiento</div>
+        </div>
+        <div class="userbar" id="userbar"></div>
+      </div>
+    </header>
+  <div class="wrap wrap-wide">
+    <div id="devBanner" class="hidden"></div>
+<div class="ops-head"><h2 class="ops-title">Mis consultas</h2><span class="muted ops-crumb">Inicio / Mis consultas</span></div>
+    <div class="ops-kpis" id="opsKpis"></div>
+    <div class="ops-bars card hidden" id="opsBars"></div>
+    <div id="alertBox" class="hidden"></div>
+    <div class="card ops-card">
+      <div class="ops-filters" id="fltWrap">
+        <button type="button" class="ops-filt-toggle" id="fltToggle" aria-expanded="false" aria-controls="fltPanel">Filtros</button>
+        <div id="fltPanel">
+          <div class="ops-toolbar">
+        <input id="fltQ" type="search" placeholder="Buscar cliente, agencia, vehículo, comercial…">
+        <select id="fltAgencia"><option value="todas">Agencia: todas</option></select>
+        <select id="fltComercial"><option value="todos">Comercial: todos</option></select>
+        <select id="fltFecha"><option value="todos" selected>Fecha: todas</option><option value="hoy">Hoy</option><option value="7">7 días</option><option value="30">30 días</option></select>
+        <select id="fltCanal"><option value="cualquiera">Canal: cualquiera</option><option value="columbia">Columbia</option><option value="galicia">Galicia</option><option value="creditcar">CreditCar</option><option value="nacion">Nación</option></select>
+        <select id="fltRes"><option value="todos">Resultado: todos</option><option value="aprobado">Pre aprobado</option><option value="sujeto_analisis">Sujeto a análisis</option><option value="sin_oferta">Sin oferta</option><option value="error">Error temporal</option><option value="sin_consultar">Sin consultar</option><option value="pendiente">Cotizando</option></select>
+        <select id="fltSeg"><option value="todos">Seguimiento: todos</option><option value="nueva">Nueva</option><option value="presentado">Presentado</option><option value="liquidado">Liquidado</option><option value="cayo">Cayó</option></select>
+        <button type="button" class="ops-btn primary" id="fltSearch">Buscar</button><button type="button" class="ops-clear" id="fltClear">Limpiar</button>
+      </div>
+        </div>
+      </div>
+      <div class="ops-meta"><span class="muted" id="syncNote">Datos del bot + consultas de este dispositivo.</span><span class="muted" id="listCount"></span></div>
+      <div id="lista"></div>
+    </div>
+  </div>
+
+  <div class="footer"><div class="inner wrap-wide-footer">
+    <a href="index.html" data-nav="home">Inicio</a>
+    <a href="cargar.html" data-nav="cargar">Cargar</a>
+    <a href="casos.html" data-nav="casos" class="active">Mis consultas</a>
+    <a href="config.html" data-nav="config">Config</a>
+  </div></div>
+
+  <script src="js/config.js?v=priv2"></script>
+  <script src="js/auth.js?v=priv2"></script>
+  <script src="js/casos.js?v=priv2"></script>
+  <script src="js/seguimiento.js?v=oferta1"></script>
+  <script src="js/ui.js?v=priv2"></script>
+  <script src="js/pdf.js?v=priv2"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const u = await ZharoAuth.requireAuth();
+      if (!u) return;
+      zharoPaintChrome("casos");
+      const state = { all: [] };
+      const $ = id => document.getElementById(id);
+      const lista = $("lista"), alertBox = $("alertBox");
+      const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+      const SHORT = { columbia: "Col", galicia: "Gal", creditcar: "CC" , nacion: "BNA" };
+      const currentFilters = () => ({ canal: $("fltCanal").value, resultado: $("fltRes").value, agencia: $("fltAgencia").value, comercial: $("fltComercial").value, fecha: $("fltFecha").value, seguimiento: $("fltSeg").value });
+
+      function fillSelects(casos) {
+        [["fltAgencia","agencia","todas","Agencia: todas"],["fltComercial","comercial","todos","Comercial: todos"]].forEach(([id,f,all,lab]) => {
+          const el = $(id), cur = el.value;
+          el.innerHTML = `<option value="${all}">${lab}</option>` + ZharoCasos.uniqueValues(casos, f).map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join("");
+          if ([...el.options].some(o => o.value === cur)) el.value = cur;
+        });
+      }
+      const tile = (lab, val, sub, cls="") => `<div class="ops-tile ${cls}"><div class="ops-tl">${lab}</div><div class="ops-tv">${val}</div>${sub?`<div class="ops-ts">${sub}</div>`:""}</div>`;
+
+      function renderKpis(casos) {
+        const s = ZharoCasos.computeStats(casos);
+        const pend = casos.filter(c => ZharoCasos.overallStatus(c) === "pendiente").length;
+        let h = tile("Total consultas", s.total, "", "t-blue")
+          + tile("Aprobación", s.total ? s.aprobPct + "%" : "—", s.total ? `${s.aprobCount} de ${s.total}` : "", "t-green")
+          + tile("Cotizando", pend, "", "t-amber");
+        h += ZharoCasos.CHANNEL_IDS.map(id => { const p = s.perCanal[id]; return tile(ZharoCasos.CHANNEL_LABEL[id], p.pct == null ? "—" : p.pct + "%", `${p.ok}/${p.n||0} OK`); }).join("");
+        h += s.topAgencias.slice(0, 2).map(a => tile("Agencia", a.n, esc(a.nombre))).join("");
+        const conv = ZharoSeguimiento.conversion(casos);
+        h += tile("Conversión", conv.total ? conv.pct + "%" : "—", conv.total ? `${conv.liquidados} de ${conv.total} liquidados` : "");
+        const admin = ZharoAuth.isAdmin && ZharoAuth.isAdmin(u.email);
+        if (admin) {
+          conv.porComercial.slice(0, 2).forEach(r => { h += tile("Comercial", (r.pct) + "%", `${esc(r.nombre)} · ${r.liquidados}/${r.n}`); });
+          conv.porAgencia.slice(0, 2).forEach(r => { h += tile("Agencia conv.", (r.pct) + "%", `${esc(r.nombre)} · ${r.liquidados}/${r.n}`); });
+        }
+        $("opsKpis").innerHTML = h;
+        const max = Math.max(1, ...s.topAgencias.map(a => a.n));
+        $("opsBars").innerHTML = s.topAgencias.length ? `<div class="ops-bars-h">Simulaciones por agencia</div>` + s.topAgencias.map(a =>
+          `<div class="ops-bar"><span title="${esc(a.nombre)}">${esc(a.nombre)}</span><div><i style="width:${Math.round(a.n/max*100)}%"></i></div><b>${a.n}</b></div>`).join("") : "";
+        $("opsBars").classList.toggle("hidden", !s.topAgencias.length);
+      }
+      function renderAlerts(casos) {
+        const al = ZharoCasos.repeatAlerts(casos, ZharoCasos.REPEAT_THRESHOLD);
+        if (!al.length) { alertBox.className = "hidden"; alertBox.innerHTML = ""; return; }
+        const a = al[0];
+        alertBox.className = "banner alert-ops";
+        alertBox.innerHTML = `<div class="alert-title">Alerta de repetición</div><div><b>${esc(a.comercial)}</b> simuló <b>${a.n}</b> veces en <b>${esc(a.agencia)}</b></div>`;
+      }
+      const chPill = (c, id) => { const r = (c.channels[id]||{}).resultado; const cls = r == null ? "wait" : ZharoCasos.pillClass(r); const label = r == null ? "—" : ZharoCasos.stateLabel(r); return `<span class="pill ch-pill ${cls}" title="${esc(ZharoCasos.CHANNEL_LABEL[id] + ": " + label)}">${esc(label)}</span>`; };
+      const estado = c => { const ov = ZharoCasos.overallStatus(c); return `<span class="ops-st ${ZharoCasos.pillClass(ov)}">${esc(ZharoCasos.stateLabel(ov))}</span>`; };
+      function detailHtml(c) {
+        return ZharoCasos.CHANNEL_IDS.map(id => { const ch = c.channels[id]||{}, r = ch.resultado;
+          const l = r == null ? "sin dato" : ZharoCasos.stateLabel(r);
+          if (id === "nacion" && r === "sin_consultar") return `<div class="detail-ch"><b>Nación</b>: sin consultar (no se obtuvo el CUIT del cliente)</div>`;
+          const neto = (id === "nacion" && ch.neto == null) ? "" : ` · neto ${ch.neto != null ? ZharoCasos.fmtMoney(ch.neto) : "—"}`;
+          return `<div class="detail-ch"><b>${ZharoCasos.CHANNEL_LABEL[id]}</b> · ${l}${neto} · plazos ${esc(ch.plazos || "—")}</div>`; }).join("");
+      }
+      function renderList(casos) {
+        $("listCount").textContent = `Mostrando ${casos.length} ${casos.length === 1 ? "consulta" : "consultas"}`;
+        if (!casos.length) { lista.innerHTML = `<p class="muted ops-empty">No hay consultas con estos filtros. <a href="cargar.html">Cargar una cotización</a></p>`; return; }
+        lista.innerHTML = `<div class="q-list">` + casos.map((c, i) => {
+          const ov = ZharoCasos.overallStatus(c);
+          const href = "consulta.html?id=" + encodeURIComponent(c.id);
+          return `<article class="q-card" data-i="${i}">
+            <div class="q-top"><span class="q-ag">${esc(c.agencia || "—")}</span><span class="q-pills"><span class="ops-st ${ZharoCasos.pillClass(ov)}">${esc(ZharoCasos.stateLabel(ov))}</span>${ZharoSeguimiento.pillHtml(c.id)}</span></div>
+            <div class="q-cli">${esc(ZharoCasos.clientLabel(c))}</div>
+            <div class="q-bot"><span class="q-date">${ZharoCasos.fmtWhen(c.fecha_hora)}</span><a class="q-more" href="${href}">Ver más</a></div>
+          </article>`;
+        }).join("") + `</div>`;
+        lista.querySelectorAll(".q-card").forEach(el => el.addEventListener("click", (ev) => {
+          if (ev.target.closest("a")) return;
+          const c = casos[+el.dataset.i];
+          if (c) location.href = "consulta.html?id=" + encodeURIComponent(c.id);
+        }));
+      }
+      function refresh() {
+        const f = currentFilters();
+        const q = $("fltQ").value.trim().toLowerCase();
+        const base = ZharoCasos.applyFilters(state.all, { ...f, canal: "cualquiera", resultado: "todos" });
+        let filtered = ZharoCasos.applyFilters(state.all, f);
+        if (q) filtered = filtered.filter(c => [ZharoCasos.clientLabel(c), c.agencia, c.vehiculo, c.comercial].join(" ").toLowerCase().includes(q));
+        if (f.seguimiento && f.seguimiento !== "todos") {
+          filtered = filtered.filter(c => ZharoSeguimiento.get(c.id).estado === f.seguimiento);
+        }
+        renderKpis(base); renderAlerts(base); renderList(filtered);
+      }
+      ["fltAgencia","fltComercial","fltFecha","fltCanal","fltRes","fltSeg"].forEach(id => $(id).addEventListener("change", refresh));
+      $("fltQ").addEventListener("input", refresh);
+      $("fltSearch").addEventListener("click", refresh);
+      $("fltQ").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); refresh(); } });
+      $("fltClear").addEventListener("click", () => { $("fltQ").value = ""; $("fltAgencia").value = "todas"; $("fltComercial").value = "todos"; $("fltFecha").value = "todos"; $("fltCanal").value = "cualquiera"; $("fltRes").value = "todos"; $("fltSeg").value = "todos"; refresh(); });
+      const fltWrap = $("fltWrap"), fltToggle = $("fltToggle");
+      if (fltToggle && fltWrap) {
+        fltToggle.addEventListener("click", () => {
+          const open = fltWrap.classList.toggle("open");
+          fltToggle.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+      }
+
+      lista.innerHTML = `<p class="muted ops-empty">Cargando consultas…</p>`;
+      try { await ZharoSeguimiento.pullGas(); } catch (_) {}
+      const note = $("syncNote");
+      let lastFeed = { casos: [] };
+      let lastSig = "";
+      async function syncFeed() {
+        const feed = await ZharoCasos.fetchFeed(u);
+        if (feed.notModified) return;
+        if (feed.error && state.all.length) return;
+        const sig = JSON.stringify(feed.casos || []) + "\n" + (feed.updated_at || "") + "\n" + (feed.error || "");
+        if (sig === lastSig) return;
+        lastSig = sig;
+        lastFeed = feed;
+        state.all = ZharoCasos.mergeCases(ZharoCasos.mine(u.email), feed.casos || []);
+        fillSelects(state.all);
+        const admin = ZharoAuth.isAdmin && ZharoAuth.isAdmin(u.email);
+        if (feed.via === "gas") note.textContent = "Tus consultas" + (feed.updated_at ? ` · ${ZharoCasos.fmtWhen(feed.updated_at)}` : "");
+        else if (admin) note.textContent = "Vista admin: todas las consultas" + (feed.updated_at ? ` · ${ZharoCasos.fmtWhen(feed.updated_at)}` : "");
+        else if (feed.error) note.textContent = "Consultas de este dispositivo.";
+        else note.textContent = "Solo ves las consultas que cargaste vos.";
+        refresh();
+      }
+      await syncFeed();
+      const again = async () => {
+        await syncFeed();
+        setTimeout(again, 2500);
+      };
+      setTimeout(again, 2500);
+      try {
+        const bc = new BroadcastChannel("zharo_casos");
+        bc.onmessage = () => {
+          state.all = ZharoCasos.mergeCases(ZharoCasos.mine(u.email), lastFeed.casos || []);
+          refresh();
+        };
+      } catch (_) {}
+    });
+  </script>
+</body>
+</html>

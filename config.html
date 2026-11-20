@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="theme-color" content="#FB3449">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="shortcut icon" href="assets/favicon.ico">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ZHARO">
+
+  <title>ZHARO · Configuración</title>
+  <link rel="stylesheet" href="css/app.css?v=brand1">
+</head>
+<body>
+    <header class="app-bar">
+      <div class="app-bar-inner">
+        <div class="brand">
+          <a href="index.html" class="brand-link"><img src="assets/zaro_logo_blanco.png" alt="ZARO" class="brand-logo"></a>
+          <div class="tag">Configuración</div>
+        </div>
+        <div class="userbar" id="userbar"></div>
+      </div>
+    </header>
+  <div class="wrap">
+    <div id="devBanner" class="hidden"></div>
+<div class="card">
+      <h2>Login Google</h2>
+      <p class="muted">Creá un OAuth Client ID (tipo Web) gratis en Google Cloud y pegalo acá. Orígenes autorizados: la URL de esta web.</p>
+      <label>Google Client ID</label>
+      <input id="googleClientId" placeholder="123456789-xxxx.apps.googleusercontent.com" autocomplete="off">
+      <p class="muted" style="margin-top:8px">Quién puede entrar se configura en el Apps Script (lista privada), no acá.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn primary block" id="save" type="button">Guardar</button>
+      <a class="btn block" href="index.html">Volver</a>
+    </div>
+    
+  </div>
+
+  <div class="footer"><div class="inner">
+    <a href="index.html" data-nav="home">Inicio</a>
+    <a href="cargar.html" data-nav="cargar">Cargar</a>
+    <a href="casos.html" data-nav="casos">Mis consultas</a>
+    <a href="config.html" data-nav="config" class="active">Config</a>
+  </div></div>
+
+  <script src="js/config.js?v=priv2"></script>
+  <script src="js/auth.js?v=priv2"></script>
+  <script src="js/ui.js?v=priv2"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // config accesible sin login para poder pegar el Client ID la primera vez
+      const u = ZharoAuth.currentUser();
+      if (u) zharoPaintChrome("config");
+      else if (ZharoConfig.isDev()) zharoPaintChrome("config");
+
+      const cfg = ZharoConfig.all();
+      document.getElementById("googleClientId").value = cfg.googleClientId || "";
+
+      document.getElementById("save").onclick = () => {
+        ZharoConfig.set("googleClientId", document.getElementById("googleClientId").value.trim());
+        zharoToast("Guardado en este navegador");
+        zharoToast("Guardado"); if (typeof zharoPaintChrome === "function") zharoPaintChrome("config");
+      };
+    });
+  </script>
+</body>
+</html>

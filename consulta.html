@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="theme-color" content="#FB3449">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="shortcut icon" href="assets/favicon.ico">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ZHARO">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>ZHARO · Consulta</title>
+  <link rel="stylesheet" href="css/app.css?v=feat2">
+</head>
+<body>
+    <header class="app-bar">
+      <div class="app-bar-inner wrap-wide">
+        <div class="brand">
+          <a href="index.html" class="brand-link"><img src="assets/zaro_logo_blanco.png" alt="ZARO" class="brand-logo"></a>
+          <div class="tag">Gestión y seguimiento</div>
+        </div>
+        <div class="userbar" id="userbar"></div>
+      </div>
+    </header>
+  <div class="wrap wrap-wide">
+    <div id="devBanner" class="hidden"></div>
+<a class="ficha-back" href="casos.html">← Mis consultas</a>
+    <div class="card ficha" id="ficha">
+      <p class="muted">Cargando consulta…</p>
+    </div>
+  </div>
+
+  <div class="footer"><div class="inner wrap-wide-footer">
+    <a href="index.html" data-nav="home">Inicio</a>
+    <a href="cargar.html" data-nav="cargar">Cargar</a>
+    <a href="casos.html" data-nav="casos" class="active">Mis consultas</a>
+    <a href="config.html" data-nav="config">Config</a>
+  </div></div>
+
+  <script src="js/config.js?v=priv2"></script>
+  <script src="js/auth.js?v=priv2"></script>
+  <script src="js/casos.js?v=priv2"></script>
+  <script src="js/oferta.js?v=priv2"></script>
+  <script src="js/prefill.js?v=feat2"></script>
+  <script src="js/requisitos.js?v=feat2"></script>
+  <script src="js/seguimiento.js?v=oferta1"></script>
+  <script src="js/ui.js?v=priv2"></script>
+  <script src="js/pdf.js?v=priv2"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const u = await ZharoAuth.requireAuth();
+      if (!u) return;
+      zharoPaintChrome("casos");
+      const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+      const box = document.getElementById("ficha");
+      const id = new URLSearchParams(location.search).get("id") || "";
+      if (!id) {
+        box.innerHTML = `<p class="muted">No se indicó una consulta. <a href="casos.html">Volver a Mis consultas</a></p>`;
+        return;
+      }
+
+      function pill(r) {
+        const cls = r == null ? "void" : ZharoCasos.pillClass(r);
+        const lab = r == null ? "—" : ZharoCasos.stateLabel(r);
+        return `<span class="ops-st ${cls}">${esc(lab)}</span>`;
+      }
+
+      function render(c) {
+        const ov = ZharoCasos.overallStatus(c);
+        const channels = ZharoCasos.CHANNEL_IDS.map(id => {
+          const ch = c.channels[id] || {};
+          const r = ch.resultado;
+          let extra = "";
+          if (id === "nacion" && r === "sin_consultar") {
+            extra = `<div class="ficha-ch-meta">Sin consultar (no se obtuvo el CUIT del cliente)</div>`;
+          } else {
+            const bits = [];
+            if (!(id === "nacion" && ch.neto == null)) bits.push(`Neto $ ${ZharoCasos.fmtMoney(ch.neto)}`);
+            bits.push(`Plazos ${esc(ch.plazos || "—")}`);
+            if (typeof ZharoOferta !== "undefined") {
+              const offers = ZharoOferta.offerList({ ...c, channels: { [id]: ch } });
+              const cap = offers[0] ? ZharoOferta.cuotaCaption(offers[0]) : null;
+              if (cap) bits.push(esc(cap));
+            }
+            if (ch.pdf_url) {
+              bits.push(`<a href="${esc(ch.pdf_url)}" target="_blank" rel="noopener">Ver PDF</a>`);
+              if (typeof ZharoOferta !== "undefined") bits.push(ZharoOferta.shareBtn(id, "share-btn-mini"));
+            }
+            extra = `<div class="ficha-ch-meta">${bits.join(" · ")}</div>`;
+          }
+          const plazos = (typeof ZharoOferta !== "undefined") ? ZharoOferta.plazosHtml(ch, id) : "";
+          const req = (typeof ZharoRequisitos !== "undefined") ? ZharoRequisitos.html(id) : "";
+          return `<div class="ficha-ch"><div class="ficha-ch-top"><b>${esc(ZharoCasos.CHANNEL_LABEL[id])}</b>${pill(r)}</div>${extra}${plazos}${req}</div>`;
+        }).join("");
+        const live = c.href ? `<a class="ficha-live" href="${esc(c.href)}">Ver cotización en vivo</a>` : "";
+        const best = (typeof ZharoOferta !== "undefined") ? ZharoOferta.cardHtml(c, "", { hideOtroMonto: true }) : "";
+        const seg = ZharoSeguimiento.get(c.id);
+        const segFecha = seg.fecha ? `Último cambio: ${ZharoCasos.fmtWhen(seg.fecha)}` : "Todavía no hubo un cambio de estado.";
+        const segBox = `<div class="seg-box">
+            <h3>Seguimiento comercial</h3>
+            ${ZharoSeguimiento.selectHtml(c.id)}
+            <label>Nota</label>
+            <textarea id="segNota" maxlength="500" placeholder="Nota interna (no se comparte en el PDF ni en WhatsApp)">${esc(seg.nota)}</textarea>
+            <div class="ficha-actions"><button type="button" class="btn primary" id="segSave">Guardar seguimiento</button></div>
+            <div class="seg-fecha" id="segFecha">${esc(segFecha)}</div>
+          </div>`;
+        box.innerHTML = `
+          <div class="ficha-head"><div>
+            <h2 class="ficha-cli">${esc(ZharoCasos.clientLabel(c))}</h2>
+            <div class="ficha-ag">${esc(c.agencia || "—")}</div>
+          </div><div class="q-pills">${pill(ov)}${ZharoSeguimiento.pillHtml(c.id)}</div></div>
+          <div class="ficha-dl">
+            <div class="ficha-item"><div class="k">Vehículo</div><div class="v">${esc(c.vehiculo || "—")}</div></div>
+            <div class="ficha-item"><div class="k">Neto pedido</div><div class="v">$ ${ZharoCasos.fmtMoney(c.neto_pedido)}</div></div>
+            <div class="ficha-item"><div class="k">Plazo</div><div class="v">${esc(c.plazos || "—")}</div></div>
+            <div class="ficha-item"><div class="k">Comercial</div><div class="v">${esc(c.comercial || "—")}</div></div>
+          </div>
+          ${best}
+          <div class="ficha-actions">
+            <a class="btn primary" href="cargar.html" data-prefill="recotizar">Recotizar</a>
+            <a class="btn" href="cargar.html" data-prefill="otro_monto">¿Otro monto?</a>
+          </div>
+          <div class="ficha-chs">${channels}</div>
+          ${segBox}
+          <div class="ficha-foot">${ZharoCasos.fmtWhen(c.fecha_hora)}</div>
+          ${live}`;
+        if (typeof ZharoOferta !== "undefined") {
+          ZharoOferta.wire(box, () => c);
+          ZharoOferta.wirePlazos(box);
+        }
+        box.addEventListener("click", (ev) => {
+          const a = ev.target.closest("[data-prefill]");
+          if (!a || typeof ZharoPrefill === "undefined") return;
+          ZharoPrefill.save(ZharoPrefill.fromCaso(c, a.getAttribute("data-prefill")));
+        });
+        const save = document.getElementById("segSave");
+        if (save) save.onclick = () => {
+          const estado = (box.querySelector("[data-seg-estado]") || {}).value || "nueva";
+          const nota = (document.getElementById("segNota") || {}).value || "";
+          const row = ZharoSeguimiento.set(c.id, { estado, nota });
+          document.getElementById("segFecha").textContent = "Último cambio: " + ZharoCasos.fmtWhen(row.fecha);
+          const headPills = box.querySelector(".ficha-head .q-pills");
+          if (headPills) headPills.innerHTML = pill(ov) + ZharoSeguimiento.pillHtml(c.id);
+          if (typeof zharoToast === "function") zharoToast("Seguimiento guardado");
+        };
+      }
+
+      async function enrichPdfs(c) {
+        const isWeb = c.source === "web" || /^[0-9a-f-]{36}$/i.test(c.id || "");
+        if (!isWeb || typeof ZharoConfig === "undefined" || !ZharoConfig.fetchLiveJson) return c;
+        try {
+          const base = (ZharoConfig.get("statusBaseUrl") || ZharoConfig.DEFAULT_STATUS_BASE).replace(/\/$/, "");
+          const got = await ZharoConfig.fetchLiveJson(base + "/" + encodeURIComponent(c.id) + ".json");
+          const chs = got && got.ok && got.json && got.json.channels;
+          if (!chs) return c;
+          for (const id of ZharoCasos.CHANNEL_IDS) {
+            const remote = chs[id] || {};
+            if (!c.channels[id]) continue;
+            if (remote.pdf_url && !c.channels[id].pdf_url) c.channels[id].pdf_url = remote.pdf_url;
+            if (Array.isArray(remote.options) && remote.options.length) c.channels[id].options = remote.options;
+            if (remote.primera_cuota != null && c.channels[id].primera_cuota == null) c.channels[id].primera_cuota = remote.primera_cuota;
+            if (remote.cuota_promedio != null && c.channels[id].cuota_promedio == null) c.channels[id].cuota_promedio = remote.cuota_promedio;
+          }
+        } catch (_) {}
+        return c;
+      }
+
+      const feed = await ZharoCasos.fetchFeed(u);
+      const all = ZharoCasos.mergeCases(ZharoCasos.mine(u.email), feed.casos || []);
+      let c = all.find(x => x.id === id) || null;
+      if (!c) {
+        box.innerHTML = `<p class="muted">No se encontró esa consulta o no te pertenece. <a href="casos.html">Volver a Mis consultas</a></p>`;
+        return;
+      }
+      c = await enrichPdfs(c);
+      try { await ZharoSeguimiento.pullGas(); } catch (_) {}
+      if (typeof ZharoRequisitos !== "undefined") { try { await ZharoRequisitos.load(); } catch (_) {} }
+      render(c);
+    });
+  </script>
+</body>
+</html>
