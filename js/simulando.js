@@ -199,7 +199,7 @@
         ${netoHtml(ch, st)}
         ${(typeof ZharoOferta !== "undefined" && ch.id !== "nacion") ? ZharoOferta.plazosHtml(st, ch.id) : ""}
         ${pdf ? `<div class="ch-actions">${pdf}</div>` : ""}
-        ${typeof ZharoRequisitos !== "undefined" ? ZharoRequisitos.html(ch.id) : ""}
+        ${(cls === "is-ok" && typeof ZharoRequisitos !== "undefined") ? ZharoRequisitos.html(ch.id) : ""}
         ${copyHtml(ch, st)}
       </div>`;
     } else if (cls === "is-stop") {
@@ -207,7 +207,7 @@
     } else if (cls === "is-skip") {
       result = `<div class="ch-result"><div class="ch-msg">${escapeHtml(ch.name)}: sin consultar (no se obtuvo el CUIT del cliente)</div></div>`;
     } else if (cls === "is-no") {
-      result = `<div class="ch-result"><div class="ch-msg">Sin oferta disponible en este canal.</div>${typeof ZharoRequisitos !== "undefined" ? ZharoRequisitos.html(ch.id) : ""}</div>`;
+      result = `<div class="ch-result"><div class="ch-msg">Sin oferta disponible en este canal.</div></div>`;
     } else if (cls === "is-err") {
       const msg = publicText(st?.message) || "No se pudo consultar. Reintentá más tarde.";
       result = `<div class="ch-result"><div class="ch-msg">${escapeHtml(msg)}</div></div>`;

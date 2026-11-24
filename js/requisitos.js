@@ -13,9 +13,8 @@ const ZharoRequisitos = (() => {
   function html(id, data) {
     const row = (data || cache || {})[id] || {};
     const items = Array.isArray(row.items) ? row.items.filter(Boolean) : [];
-    const body = items.length
-      ? `<ul class="req-list">${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`
-      : `<p class="muted">A completar por Leo. Todavía no cargamos la documentación que pide este banco.</p>`;
+    if (!items.length) return "";            // sin documentación cargada para este canal: no se muestra nada
+    const body = `<ul class="req-list">${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
     const nota = row.nota && items.length ? `<p class="muted">${esc(row.nota)}</p>` : "";
     const src = row.fuente ? `<p class="muted">Fuente: ${esc(row.fuente)}</p>` : "";
     return `<details class="req-box"><summary>Qué documentación pide</summary>${body}${nota}${src}</details>`;

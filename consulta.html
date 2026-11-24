@@ -49,7 +49,7 @@
   <script src="js/casos.js?v=priv2"></script>
   <script src="js/oferta.js?v=priv2"></script>
   <script src="js/prefill.js?v=feat2"></script>
-  <script src="js/requisitos.js?v=feat2"></script>
+  <script src="js/requisitos.js?v=feat3"></script>
   <script src="js/seguimiento.js?v=oferta1"></script>
   <script src="js/ui.js?v=priv2"></script>
   <script src="js/pdf.js?v=priv2"></script>
@@ -96,7 +96,7 @@
             extra = `<div class="ficha-ch-meta">${bits.join(" · ")}</div>`;
           }
           const plazos = (typeof ZharoOferta !== "undefined") ? ZharoOferta.plazosHtml(ch, id) : "";
-          const req = (typeof ZharoRequisitos !== "undefined") ? ZharoRequisitos.html(id) : "";
+          const req = (typeof ZharoRequisitos !== "undefined" && ZharoCasos.pillClass(r) === "ok") ? ZharoRequisitos.html(id) : "";
           return `<div class="ficha-ch"><div class="ficha-ch-top"><b>${esc(ZharoCasos.CHANNEL_LABEL[id])}</b>${pill(r)}</div>${extra}${plazos}${req}</div>`;
         }).join("");
         const live = c.href ? `<a class="ficha-live" href="${esc(c.href)}">Ver cotización en vivo</a>` : "";
