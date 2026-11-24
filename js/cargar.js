@@ -242,9 +242,21 @@ function showSendError(out) {
   zharoToast("No se pudo enviar a cotizar");
 }
 
+const ES_TACTIL = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+
 function wireCombo(k) {
   const inp = comboIn(k);
   const ul = comboList(k);
+
+  // En el celular: lista para tocar, sin abrir el teclado (el teclado tapaba la lista).
+  if (ES_TACTIL) {
+    inp.readOnly = true;
+    inp.setAttribute("inputmode", "none");
+    inp.placeholder = inp.placeholder.replace(" o buscá", "");
+    inp.addEventListener("click", () => {
+      setTimeout(() => ul.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+    });
+  }
 
   inp.addEventListener("focus", () => {
     closeAll(k);
