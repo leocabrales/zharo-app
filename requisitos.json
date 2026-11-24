@@ -1,17 +1,31 @@
 {
   "columbia": {
-    "items": [],
-    "nota": "A completar por Leo",
+    "items": [
+      "DNI frente y dorso.",
+      "Servicio con el domicilio actual, si no coincide con el del DNI.",
+      "Título del auto.",
+      "Validación del celular del cliente por SMS."
+    ],
+    "nota": null,
     "fuente": null
   },
   "galicia": {
-    "items": [],
-    "nota": "A completar por Leo",
+    "items": [
+      "DNI frente y dorso.",
+      "Título del auto.",
+      "Apertura de cuenta del cliente para aceptar el aprobado."
+    ],
+    "nota": null,
     "fuente": null
   },
   "creditcar": {
-    "items": [],
-    "nota": "A completar por Leo",
+    "items": [
+      "DNI frente y dorso.",
+      "Servicio con el domicilio actual (puede estar a nombre de un tercero).",
+      "Ubicación compartida por WhatsApp para validar la geolocalización.",
+      "Firma digital del cliente en un documento (validación biométrica)."
+    ],
+    "nota": null,
     "fuente": null
   },
   "nacion": {
@@ -19,7 +33,7 @@
       "Factura definitiva de venta en PDF: es la única documentación respaldatoria de venta que admite el banco para gestionar el préstamo. No se admite ningún otro tipo de documentación de venta.",
       "DNI del cliente y validación biométrica (reconocimiento facial y verificación del DNI)."
     ],
-    "nota": "Tomado del manual operativo de Nación que usa el bot (bna_manual.pdf). Si el banco actualizó el circuito, Leo puede corregirlo en este archivo.",
-    "fuente": "bna_manual.pdf"
+    "nota": null,
+    "fuente": null
   }
 }
