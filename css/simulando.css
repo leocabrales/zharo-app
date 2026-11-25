@@ -243,8 +243,8 @@
 .ch.is-stop .ch-status{color:#cbd5e1;background:rgba(51,65,85,.5);border-color:rgba(148,163,184,.35)}
 
 .sim-best{margin:0 0 16px}
-.best-card.best-dark{background:rgba(15,23,42,.62);border:1px solid rgba(148,163,184,.18);border-radius:20px;color:#e8eefc;box-shadow:0 20px 50px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(16px)}
-.best-card.best-dark .best-kicker{color:#fecdd3}
+.best-card.best-dark{background:linear-gradient(180deg,rgba(30,41,59,.92),rgba(15,23,42,.92));border:2px solid rgba(255,255,255,.9);border-radius:20px;color:#e8eefc;box-shadow:0 0 0 4px rgba(255,255,255,.08),0 0 28px rgba(255,255,255,.12),0 20px 50px rgba(0,0,0,.4);backdrop-filter:blur(16px)}
+.best-card.best-dark .best-kicker{display:inline-block;background:#fff;color:#0f172a !important;padding:4px 10px;border-radius:999px;letter-spacing:.1em}
 .best-card.best-dark .best-block{border-bottom-color:rgba(148,163,184,.2)}
 .best-card.best-dark .best-block-h{color:#94a3b8}
 .best-card.best-dark .best-neto{color:#fff}
