@@ -304,29 +304,67 @@ const ZharoOferta = (() => {
     return "https://wa.me/?text=" + encodeURIComponent(text);
   }
 
+  function pdfNombre(caso, o) {
+    const ap = String(clientName(caso) || "").trim().split(/\s+/)[0] || "";
+    const limpio = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    return ["Propuesta_ZHARO", limpio(o.nombre), limpio(ap)].filter(Boolean).join("_") + ".pdf";
+  }
+
+  // Qué PDFs se comparten: el banco elegido, o la mejor opción (más plata y, si es otro banco, más barata).
+  function shareTargets(caso, channelId) {
+    const best = bestOption(caso);
+    if (channelId) {
+      const o = best.offers.find((x) => x.id === channelId);
+      return o && o.pdf_url ? [o] : [];
+    }
+    const out = [];
+    for (const o of [best.mayorNeto, best.menorCuota]) {
+      if (o && o.pdf_url && !out.some((x) => x.id === o.id)) out.push(o);
+    }
+    return out;
+  }
+
+  // Precarga los PDFs para que al tocar "Compartir" salga al instante.
+  function prefetch(caso) {
+    if (typeof ZharoPdf === "undefined" || !ZharoPdf.archivo) return;
+    const best = bestOption(caso);
+    for (const o of best.offers) {
+      if (o.pdf_url && /^drive:/.test(o.pdf_url)) ZharoPdf.archivo(o.pdf_url, pdfNombre(caso, o)).catch(() => {});
+    }
+  }
+
   async function share(caso, opts) {
     const opt = opts || {};
-    const text = shareSummary(caso, opt);
-    let url;
-    if (opt.channelId) {
-      const ch = ((caso && caso.channels) || {})[opt.channelId] || {};
-      url = ch.pdf_url || null;
-    } else {
-      const best = bestOption(caso);
-      url = (best.mayorNeto && best.mayorNeto.pdf_url) || (best.offers.find((o) => o.pdf_url) || {}).pdf_url || null;
-    }
-    if (typeof navigator !== "undefined" && navigator.share) {
+    const targets = shareTargets(caso, opt.channelId);
+    // Se comparte el PDF (no el texto con todos los datos).
+    if (targets.length && typeof ZharoPdf !== "undefined" && ZharoPdf.archivo) {
+      let files = null;
       try {
-        const payload = { title: "ZHARO", text };
-        if (url) payload.url = url;
-        await navigator.share(payload);
-        return "share";
-      } catch (err) {
-        if (err && err.name === "AbortError") return "abort";
+        files = await Promise.all(targets.map((o) => ZharoPdf.archivo(o.pdf_url, pdfNombre(caso, o))));
+      } catch (e) {
+        alert(/unauthorized/.test(String(e && e.message)) ? "Tu sesión venció. Volvé a entrar." : "No se pudo traer el PDF. Probá de nuevo en un momento.");
+        return "error";
       }
+      if (typeof navigator !== "undefined" && navigator.canShare && navigator.canShare({ files })) {
+        try {
+          await navigator.share({ files, title: "Propuesta ZHARO" });
+          return "share";
+        } catch (err) {
+          if (err && err.name === "AbortError") return "abort";
+        }
+      }
+      // Sin "compartir archivos" (p. ej. compu): se descarga el PDF para adjuntarlo a mano.
+      for (const f of files) {
+        const u = URL.createObjectURL(f);
+        const a = document.createElement("a");
+        a.href = u; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(u), 60000);
+      }
+      alert("Se descargó el PDF. Adjuntalo en WhatsApp.");
+      return "download";
     }
-    if (typeof window !== "undefined") window.open(waUrl(text), "_blank", "noopener");
-    return "whatsapp";
+    alert(opt.channelId ? "Este banco todavía no tiene PDF." : "Todavía no hay un PDF para compartir.");
+    return "none";
   }
 
   function wire(root, casoOrFn) {
@@ -346,7 +384,7 @@ const ZharoOferta = (() => {
 
   function shareBtn(channelId, extraClass) {
     const id = channelId || "all";
-    const lab = id === "all" ? "Compartir por WhatsApp" : "Compartir PDF";
+    const lab = id === "all" ? "Compartir PDF por WhatsApp" : "Compartir PDF";
     return `<button type="button" class="share-btn ${extraClass || ""}" data-share="${esc(id)}">${lab}</button>`;
   }
 
@@ -378,6 +416,7 @@ const ZharoOferta = (() => {
       body = block("Más plata", best.mayorNeto) + block("Más barata", best.menorCuota);
     }
     const tip = sugerencia(caso, best);
+    try { prefetch(caso); } catch (_) {}
     return `<div class="best-card ${theme || ""}">
       <div class="best-kicker">Mejor opción</div>
       ${body}
@@ -451,6 +490,6 @@ const ZharoOferta = (() => {
 
   return {
     offerList, bestOption, plazosOf, plazosHtml, wirePlazos, shareSummary, share, waUrl, wire, cardHtml, shareBtn,
-    fmtNeto, fmtCuota, cuotaCaption, requestedPlazo, num, clientName, sugerencia,
+    fmtNeto, fmtCuota, cuotaCaption, requestedPlazo, num, clientName, sugerencia, prefetch,
   };
 })();
