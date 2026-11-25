@@ -132,7 +132,9 @@ const ZharoOferta = (() => {
   function bestOption(caso) {
     const offers = offerList(caso);
     const withNeto = offers.filter((o) => o.neto != null);
-    const withCuota = offers.filter((o) => o.cuota != null);
+    // Menor cuota solo compara cuotas al plazo que pidió la agencia (una cuota a otro plazo no es comparable).
+    const pl = requestedPlazo(caso);
+    const withCuota = offers.filter((o) => o.cuota != null && (pl == null || Number(o.cuotaPlazo) === pl));
     const mayorNeto = withNeto.length ? [...withNeto].sort(cmpNeto)[0] : null;
     const menorCuota = withCuota.length ? [...withCuota].sort(cmpCuota)[0] : null;
     const same = !!(mayorNeto && menorCuota && mayorNeto.id === menorCuota.id);
