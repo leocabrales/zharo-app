@@ -121,7 +121,10 @@ async function zharoSubmitCase(data, user) {
         remote.unauthorized = true;
         remote.error = "Tu sesión venció o tu mail no está habilitado. Volvé a entrar.";
       } else if (!ok) {
-        remote.error = (j && j.error) || ("HTTP " + r.status);
+        const msgs = { rate_limited: "Cargaste muchos casos en la última hora. Esperá unos minutos y volvé a intentar.",
+                       forbidden: "No se pudo cargar el caso. Volvé a intentarlo desde el formulario.",
+                       payload_too_large: "Los datos cargados son demasiado largos. Revisá el formulario." };
+        remote.error = (j && (j.message || msgs[j.error] || j.error)) || ("HTTP " + r.status);
       }
     } catch (e) {
       remote = { ok: false, skipped: false, error: String(e && e.message || e), via: "public" };
