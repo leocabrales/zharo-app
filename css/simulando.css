@@ -265,3 +265,5 @@
 .ch .req-box .muted{color:#94a3b8}
 .sim-done-sub.aviso-nota{color:#94a3b8;margin-top:8px}
 .best-card.best-dark .best-pm{color:#94a3b8;font-size:12px;font-weight:500;margin-top:2px}
+.best-card.best-dark .best-tip{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(251,52,73,.12);border:1px solid rgba(251,52,73,.45);color:#fde2e5;font-size:13px;line-height:1.4}
+.best-card.best-dark .best-tip b{color:#fff}

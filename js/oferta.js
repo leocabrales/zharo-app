@@ -171,6 +171,52 @@ const ZharoOferta = (() => {
     return { offers, mayorNeto, menorCuota, same };
   }
 
+  // Cuotas reales del banco por plazo (mismo neto) para un canal: {plazo: cuota}. Sin UVA.
+  function cuotasPorPlazo(ch) {
+    const m = {};
+    for (const o of (ch && ch.options) || []) {
+      if (!o || /uva/i.test(String(o.tipo || ""))) continue;
+      for (const x of o.plazos || []) {
+        const pl = num(x && x.plazo), cu = num(x && x.primera_cuota);
+        if (pl != null && cu != null && m[pl] == null) m[pl] = cu;
+      }
+      const pl = num(o.plazo), cu = num(o.primera_cuota);
+      if (pl != null && cu != null && m[pl] == null) m[pl] = cu;
+    }
+    return m;
+  }
+
+  // Una sola sugerencia para el comercial, siempre con números reales del banco (no va al PDF ni a WhatsApp).
+  function sugerencia(caso, best) {
+    best = best || bestOption(caso);
+    if (!best.offers.length) return null;
+    const pedido = num(caso && (caso.neto_pedido ?? caso.neto));
+    const plazo = requestedPlazo(caso);
+    const pre = best.offers.filter((o) => o.state === "pre_aprobado" && o.neto != null);
+    // 1) Lo pedido solo sale sujeto a análisis (o no sale): bajar el monto lo deja pre aprobado.
+    if (pedido && !pre.some((o) => o.neto >= pedido * 0.995)) {
+      const cand = pre.filter((o) => o.neto >= pedido * 0.6).sort(cmpNeto)[0];
+      if (cand) {
+        const llega = best.offers.some((o) => o.neto != null && o.neto >= pedido * 0.995);
+        return `Si bajás el pedido a ${fmtNeto(cand.neto)}, ${cand.nombre} lo da pre aprobado` +
+          (llega ? " (lo pedido solo sale sujeto a análisis)." : " (ningún banco llega a lo pedido).");
+      }
+    }
+    // 2) Más plazo con el mismo banco baja la cuota bastante (mismo neto).
+    if (plazo) {
+      const o = best.same ? best.mayorNeto : (best.mayorNeto || best.menorCuota);
+      const chans = [o, best.menorCuota].filter(Boolean);
+      for (const x of chans) {
+        const m = cuotasPorPlazo(((caso && caso.channels) || {})[x.id]);
+        const base = m[plazo];
+        if (base == null) continue;
+        const pl = Object.keys(m).map(Number).filter((p) => p > plazo && m[p] <= base * 0.85).sort((a, b) => a - b)[0];
+        if (pl) return `Pasando a ${pl} meses con ${x.nombre}, la 1ª cuota baja de ${fmtCuota(base)} a ${fmtCuota(m[pl])} (mismo neto).`;
+      }
+    }
+    return null;
+  }
+
   function fmtNeto(n) {
     if (n == null) return "—";
     if (typeof ZharoCasos !== "undefined" && ZharoCasos.fmtMoney) return "$ " + ZharoCasos.fmtMoney(n);
@@ -331,9 +377,11 @@ const ZharoOferta = (() => {
     } else {
       body = block("Más plata", best.mayorNeto) + block("Más barata", best.menorCuota);
     }
+    const tip = sugerencia(caso, best);
     return `<div class="best-card ${theme || ""}">
       <div class="best-kicker">Mejor opción</div>
       ${body}
+      ${tip ? `<div class="best-tip"><b>Sugerencia:</b> ${esc(tip)}</div>` : ""}
       <div class="best-share">${shareBtn("all")}${(typeof ZharoPrefill !== "undefined" && !opts.hideOtroMonto) ? ` <a class="share-btn share-btn-mini" href="cargar.html" data-prefill="otro_monto">¿Otro monto?</a>` : ""}</div>
     </div>`;
   }
@@ -403,6 +451,6 @@ const ZharoOferta = (() => {
 
   return {
     offerList, bestOption, plazosOf, plazosHtml, wirePlazos, shareSummary, share, waUrl, wire, cardHtml, shareBtn,
-    fmtNeto, fmtCuota, cuotaCaption, requestedPlazo, num, clientName,
+    fmtNeto, fmtCuota, cuotaCaption, requestedPlazo, num, clientName, sugerencia,
   };
 })();
