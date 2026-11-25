@@ -92,6 +92,29 @@ const ZharoOferta = (() => {
     return null;
   }
 
+  // Costo comparable: 1ª cuota (sin seguro) por cada $1.000.000 de neto, al plazo pedido.
+  // UVA no entra: su 1ª cuota es más baja pero se ajusta, no es comparable con tasa fija.
+  function costoAlPlazo(ch, plazo) {
+    if (plazo == null || !Array.isArray(ch && ch.options)) return null;
+    let best = null;
+    const consider = (cuota, neto) => {
+      if (cuota == null || neto == null || neto <= 0) return;
+      const ratio = cuota * 1e6 / neto;
+      if (!best || ratio < best.ratio) best = { cuota, neto, ratio, plazo };
+    };
+    for (const o of ch.options) {
+      if (!o || typeof o !== "object" || /uva/i.test(String(o.tipo || ""))) continue;
+      const neto = num(o.neto) ?? num(ch.neto);
+      if (Array.isArray(o.plazos) && o.plazos.length) {
+        const hit = o.plazos.find((x) => x && Number(x.plazo) === plazo);
+        if (hit) consider(num(hit.primera_cuota), neto);
+      } else if (num(o.plazo) === plazo) {
+        consider(num(o.primera_cuota), neto);
+      }
+    }
+    return best;
+  }
+
   function offerList(caso) {
     const plazo = requestedPlazo(caso);
     const channels = (caso && caso.channels) || {};
@@ -111,6 +134,7 @@ const ZharoOferta = (() => {
         cuota: cuota ? cuota.valor : null,
         cuotaKind: cuota ? cuota.kind : null,
         cuotaPlazo: cuota ? cuota.plazo : null,
+        costo: costoAlPlazo(ch, plazo),
         pdf_url: ch.pdf_url || null,
       });
     }
@@ -119,12 +143,16 @@ const ZharoOferta = (() => {
 
   function cmpNeto(a, b) {
     if (b.neto !== a.neto) return (b.neto == null ? -1 : b.neto) - (a.neto == null ? -1 : a.neto);
+    // Mismo neto (p. ej. todos dan lo pedido): primero pre aprobado, después el más barato al plazo pedido.
+    if (a.state !== b.state) return a.state === "pre_aprobado" ? -1 : 1;
+    const ra = a.costo ? a.costo.ratio : Infinity, rb = b.costo ? b.costo.ratio : Infinity;
+    if (ra !== rb) return ra - rb;
     if (a.state !== b.state) return a.state === "pre_aprobado" ? -1 : 1;
     return ids().indexOf(a.id) - ids().indexOf(b.id);
   }
 
-  function cmpCuota(a, b) {
-    if (a.cuota !== b.cuota) return a.cuota - b.cuota;
+  function cmpCosto(a, b) {
+    if (a.costo.ratio !== b.costo.ratio) return a.costo.ratio - b.costo.ratio;
     if (a.state !== b.state) return a.state === "pre_aprobado" ? -1 : 1;
     return ids().indexOf(a.id) - ids().indexOf(b.id);
   }
@@ -132,11 +160,13 @@ const ZharoOferta = (() => {
   function bestOption(caso) {
     const offers = offerList(caso);
     const withNeto = offers.filter((o) => o.neto != null);
-    // Menor cuota solo compara cuotas al plazo que pidió la agencia (una cuota a otro plazo no es comparable).
-    const pl = requestedPlazo(caso);
-    const withCuota = offers.filter((o) => o.cuota != null && (pl == null || Number(o.cuotaPlazo) === pl));
     const mayorNeto = withNeto.length ? [...withNeto].sort(cmpNeto)[0] : null;
-    const menorCuota = withCuota.length ? [...withCuota].sort(cmpCuota)[0] : null;
+    // "Más barata": menor cuota por cada $1M de neto, al plazo pedido (solo bancos con cuota a ese plazo).
+    const withCosto = offers.filter((o) => o.costo);
+    const barata = withCosto.length ? [...withCosto].sort(cmpCosto)[0] : null;
+    const menorCuota = barata ? Object.assign({}, barata, {
+      cuota: barata.costo.cuota, cuotaPlazo: barata.costo.plazo, cuotaKind: "primera",
+      porMillon: barata.costo.ratio }) : null;
     const same = !!(mayorNeto && menorCuota && mayorNeto.id === menorCuota.id);
     return { offers, mayorNeto, menorCuota, same };
   }
@@ -158,6 +188,11 @@ const ZharoOferta = (() => {
     const kind = o.cuotaKind === "promedio" ? "Cuota promedio (sin seguro)" : "1ª cuota (sin seguro)";
     const pl = o.cuotaPlazo ? ` · ${o.cuotaPlazo} meses` : "";
     return kind + pl + ": " + fmtCuota(o.cuota);
+  }
+
+  function porMillonCaption(o) {
+    if (!o || o.porMillon == null) return null;
+    return "≈ " + fmtNeto(Math.round(o.porMillon)) + " de cuota por cada $ 1.000.000";
   }
 
   function clientName(caso) {
@@ -203,16 +238,16 @@ const ZharoOferta = (() => {
       return lines.join("\n");
     }
     if (best.same && best.mayorNeto) {
-      lines.push("Mejor opción: " + best.mayorNeto.nombre + " — mayor neto y menor cuota (sin seguro).");
+      lines.push("Mejor opción: " + best.mayorNeto.nombre + " — más plata y más barata.");
       lines.push(...offerLines(best.mayorNeto));
     } else {
       if (best.mayorNeto) {
-        lines.push("Mayor neto: " + best.mayorNeto.nombre);
+        lines.push("Más plata: " + best.mayorNeto.nombre);
         lines.push(...offerLines(best.mayorNeto));
       }
       if (best.menorCuota) {
         if (best.mayorNeto) lines.push("");
-        lines.push("Menor cuota (sin seguro): " + best.menorCuota.nombre);
+        lines.push("Más barata: " + best.menorCuota.nombre);
         lines.push(...offerLines(best.menorCuota));
       }
     }
@@ -284,16 +319,17 @@ const ZharoOferta = (() => {
         <div class="best-bank">${esc(o.nombre)} <span class="ops-st ${o.state === "pre_aprobado" ? "ok" : "review"}">${esc(o.stateLabel)}</span></div>
         ${o.neto != null ? `<div class="best-neto">Neto ${esc(fmtNeto(o.neto))}</div>` : ""}
         ${cap ? `<div class="best-cuota">${esc(cap)}</div>` : ""}
+        ${porMillonCaption(o) ? `<div class="best-cuota best-pm">${esc(porMillonCaption(o))}</div>` : ""}
         ${pdf ? `<div class="best-actions">${pdf}</div>` : ""}
       </div>`;
     };
     let body;
     if (best.same && best.mayorNeto) {
-      body = block("Mayor neto y menor cuota", best.mayorNeto);
+      body = block("Más plata y más barata", best.menorCuota);
     } else if (!best.menorCuota) {
-      body = block("Mayor neto", best.mayorNeto);
+      body = block("Más plata", best.mayorNeto);
     } else {
-      body = block("Mayor neto", best.mayorNeto) + block("Menor cuota (sin seguro)", best.menorCuota);
+      body = block("Más plata", best.mayorNeto) + block("Más barata", best.menorCuota);
     }
     return `<div class="best-card ${theme || ""}">
       <div class="best-kicker">Mejor opción</div>

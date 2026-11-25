@@ -263,3 +263,4 @@ pre.payload{white-space:pre-wrap;word-break:break-word;background:#0f172a;color:
 .req-list li{margin:4px 0}
 .aviso-nota{font-size:12px;color:var(--muted)!important;font-weight:500}
 #prefillNote{margin:0 0 14px}
+.best-pm{color:var(--muted);font-size:12px;font-weight:500;margin-top:2px}
