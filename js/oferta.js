@@ -42,9 +42,17 @@ const ZharoOferta = (() => {
   }
 
   function requestedPlazo(caso) {
-    const raw = caso && (caso.plazo ?? caso.plazos ?? (caso._raw && (caso._raw.plazo ?? caso._raw.plazos)));
-    const n = Number(String(raw == null ? "" : raw).replace(/\D/g, ""));
-    return Number.isFinite(n) && n > 0 ? n : null;
+    // Plazo que pidió la agencia (uno solo). Una lista de plazos del banco ("6,8,10,...") no es el pedido.
+    const cands = caso ? [caso.plazo_pedido, caso.plazo, caso._raw && caso._raw.plazo_pedido,
+                          caso._raw && caso._raw.plazo, caso.plazos] : [];
+    for (const raw of cands) {
+      if (raw == null || raw === "") continue;
+      const t = String(raw).trim();
+      if (!/^\d{1,3}(\s*(m|meses))?$/i.test(t)) continue;
+      const n = Number(t.replace(/\D/g, ""));
+      if (n > 0 && n <= 120) return n;
+    }
+    return null;
   }
 
   function cuotaFromOptions(options, plazo) {
@@ -195,11 +203,11 @@ const ZharoOferta = (() => {
     const pre = best.offers.filter((o) => o.state === "pre_aprobado" && o.neto != null);
     // 1) Lo pedido solo sale sujeto a análisis (o no sale): bajar el monto lo deja pre aprobado.
     if (pedido && !pre.some((o) => o.neto >= pedido * 0.995)) {
+      // Solo tiene sentido si lo pedido sale en algún banco pero sujeto a análisis: bajando un poco queda pre aprobado.
+      const llega = best.offers.filter((o) => o.state !== "pre_aprobado" && o.neto != null && o.neto >= pedido * 0.995);
       const cand = pre.filter((o) => o.neto >= pedido * 0.6).sort(cmpNeto)[0];
-      if (cand) {
-        const llega = best.offers.some((o) => o.neto != null && o.neto >= pedido * 0.995);
-        return `Si bajás el pedido a ${fmtNeto(cand.neto)}, ${cand.nombre} lo da pre aprobado` +
-          (llega ? " (lo pedido solo sale sujeto a análisis)." : " (ningún banco llega a lo pedido).");
+      if (cand && llega.length) {
+        return `Lo pedido sale con ${llega[0].nombre} sujeto a análisis. Si bajás a ${fmtNeto(cand.neto)}, ${cand.nombre} lo da pre aprobado.`;
       }
     }
     // 2) Más plazo con el mismo banco baja la cuota bastante (mismo neto).
@@ -284,16 +292,16 @@ const ZharoOferta = (() => {
       return lines.join("\n");
     }
     if (best.same && best.mayorNeto) {
-      lines.push("Mejor opción: " + best.mayorNeto.nombre + " — más plata y más barata.");
+      lines.push("Mejor opción: " + best.mayorNeto.nombre + " — mayor capital y menor costo.");
       lines.push(...offerLines(best.mayorNeto));
     } else {
       if (best.mayorNeto) {
-        lines.push("Más plata: " + best.mayorNeto.nombre);
+        lines.push("Mayor capital: " + best.mayorNeto.nombre);
         lines.push(...offerLines(best.mayorNeto));
       }
       if (best.menorCuota) {
         if (best.mayorNeto) lines.push("");
-        lines.push("Más barata: " + best.menorCuota.nombre);
+        lines.push("Menor costo: " + best.menorCuota.nombre);
         lines.push(...offerLines(best.menorCuota));
       }
     }
@@ -409,11 +417,11 @@ const ZharoOferta = (() => {
     };
     let body;
     if (best.same && best.mayorNeto) {
-      body = block("Más plata y más barata", best.menorCuota);
+      body = block("Mayor capital y menor costo", best.menorCuota);
     } else if (!best.menorCuota) {
-      body = block("Más plata", best.mayorNeto);
+      body = block("Mayor capital", best.mayorNeto);
     } else {
-      body = block("Más plata", best.mayorNeto) + block("Más barata", best.menorCuota);
+      body = block("Mayor capital", best.mayorNeto) + block("Menor costo", best.menorCuota);
     }
     const tip = sugerencia(caso, best);
     try { prefetch(caso); } catch (_) {}

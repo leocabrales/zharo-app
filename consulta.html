@@ -46,8 +46,8 @@
 
   <script src="js/config.js?v=priv2"></script>
   <script src="js/auth.js?v=priv2"></script>
-  <script src="js/casos.js?v=nom1"></script>
-  <script src="js/oferta.js?v=pdfsh1"></script>
+  <script src="js/casos.js?v=cap1"></script>
+  <script src="js/oferta.js?v=cap1"></script>
   <script src="js/prefill.js?v=feat2"></script>
   <script src="js/requisitos.js?v=feat3"></script>
   <script src="js/seguimiento.js?v=oferta1"></script>
@@ -80,10 +80,13 @@
           let extra = "";
           if (id === "nacion" && r === "sin_consultar") {
             extra = `<div class="ficha-ch-meta">Sin consultar (no se obtuvo el CUIT del cliente)</div>`;
+          } else if (!["ok", "review"].includes(ZharoCasos.pillClass(r))) {
+            extra = "";   // sin oferta / rechazado / error: solo banco y estado
           } else {
             const bits = [];
-            if (!(id === "nacion" && ch.neto == null)) bits.push(`Neto $ ${ZharoCasos.fmtMoney(ch.neto)}`);
-            bits.push(`Plazos ${esc(ch.plazos || "—")}`);
+            if (ch.neto != null) bits.push(`Neto $ ${ZharoCasos.fmtMoney(ch.neto)}`);
+            const plz = ZharoOferta && ZharoOferta.requestedPlazo ? ZharoOferta.requestedPlazo(c) : null;
+            if (plz) bits.push(`${plz} meses`);
             if (typeof ZharoOferta !== "undefined") {
               const offers = ZharoOferta.offerList({ ...c, channels: { [id]: ch } });
               const cap = offers[0] ? ZharoOferta.cuotaCaption(offers[0]) : null;
@@ -95,7 +98,7 @@
             }
             extra = `<div class="ficha-ch-meta">${bits.join(" · ")}</div>`;
           }
-          const plazos = (typeof ZharoOferta !== "undefined") ? ZharoOferta.plazosHtml(ch, id) : "";
+          const plazos = "";   // en pantalla solo el plazo que pidió la agencia; los demás van en el PDF
           const req = (typeof ZharoRequisitos !== "undefined" && ZharoCasos.pillClass(r) === "ok") ? ZharoRequisitos.html(id) : "";
           return `<div class="ficha-ch"><div class="ficha-ch-top"><b>${esc(ZharoCasos.CHANNEL_LABEL[id])}</b>${pill(r)}</div>${extra}${plazos}${req}</div>`;
         }).join("");
@@ -119,7 +122,7 @@
           <div class="ficha-dl">
             <div class="ficha-item"><div class="k">Vehículo</div><div class="v">${esc(c.vehiculo || "—")}</div></div>
             <div class="ficha-item"><div class="k">Neto pedido</div><div class="v">$ ${ZharoCasos.fmtMoney(c.neto_pedido)}</div></div>
-            <div class="ficha-item"><div class="k">Plazo</div><div class="v">${esc(c.plazos || "—")}</div></div>
+            <div class="ficha-item"><div class="k">Plazo</div><div class="v">${(() => { const p = ZharoOferta.requestedPlazo(c); return p ? p + " meses" : "—"; })()}</div></div>
             <div class="ficha-item"><div class="k">Comercial</div><div class="v">${esc(c.comercial || "—")}</div></div>
           </div>
           ${best}
