@@ -267,3 +267,10 @@
 .best-card.best-dark .best-pm{color:#94a3b8;font-size:12px;font-weight:500;margin-top:2px}
 .best-card.best-dark .best-tip{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(251,52,73,.12);border:1px solid rgba(251,52,73,.45);color:#fde2e5;font-size:13px;line-height:1.4}
 .best-card.best-dark .best-tip b{color:#fff}
+.ch-tip-tab{padding:10px 12px}
+.ch-tip-tab .tip-h{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;opacity:.9}
+.tip-tab{width:100%;border-collapse:collapse;font-size:13px}
+.tip-tab th{text-align:right;font-weight:700;opacity:.7;padding:4px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.tip-tab th:first-child,.tip-tab td:first-child{text-align:left}
+.tip-tab td{text-align:right;padding:5px 6px;border-top:1px solid rgba(255,255,255,.08);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ch-cod{margin-top:8px}

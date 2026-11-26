@@ -164,9 +164,51 @@
     return `<div class="ch-options">${options.map((o) => `<div class="ch-opt"><span class="ch-opt-tipo">${escapeHtml(o.tipo)}</span><div class="ch-neto"><small>NETO AGENCIA</small>${escapeHtml(money(o.neto))}</div></div>`).join("")}</div>`;
   }
 
+  // Convierte el aviso de plazos de Galicia en una tablita (Plazo | Tasa fija | UVA). Si no lo reconoce, null.
+  function plazosTablaHtml(text) {
+    const t = String(text || "");
+    const filas = new Map();   // plazo -> {fija, uva, cuota}
+    const put = (pl, k, v) => { const r = filas.get(pl) || {}; r[k] = v; filas.set(pl, r); };
+    let titulo = "";
+    if (/A m[aá]s plazo, m[aá]s capital/i.test(t)) {
+      titulo = "A más plazo, más capital";
+      const cuerpo = t.replace(/^.*?m[aá]s capital\.\s*/i, "");
+      for (const seg of cuerpo.split(";")) {
+        const m = seg.match(/^\s*(Tasa fija|UVA)\s*:\s*(.+)$/i);
+        if (!m) continue;
+        const k = /uva/i.test(m[1]) ? "uva" : "fija";
+        for (const x of m[2].matchAll(/(\d+)\s*meses hasta \$\s*([\d.]*\d)/gi)) put(+x[1], k, x[2]);
+      }
+    } else if (/A \d+ meses: neto hasta/i.test(t)) {
+      titulo = "Más plazo para llegar al monto";
+      for (const x of t.matchAll(/A (\d+) meses: neto hasta \$\s*([\d.]*\d)(?:\s*\(cuota aprox \$\s*([\d.]*\d)\))?/gi)) {
+        put(+x[1], "neto", x[2]); if (x[3]) put(+x[1], "cuota", x[3]);
+      }
+    }
+    if (!filas.size) return null;
+    const rows = [...filas.entries()].sort((a, b) => a[0] - b[0]);
+    const cols = titulo.startsWith("A más")
+      ? [["fija", "Tasa fija"], ["uva", "UVA"]].filter(([k]) => rows.some(([, r]) => r[k]))
+      : [["neto", "Neto hasta"], ["cuota", "Cuota aprox."]].filter(([k]) => rows.some(([, r]) => r[k]));
+    const head = `<tr><th>Plazo</th>${cols.map(([, l]) => `<th>${l}</th>`).join("")}</tr>`;
+    const body = rows.map(([pl, r]) => `<tr><td>${pl} meses</td>${cols.map(([k]) => `<td>${r[k] ? "$ " + escapeHtml(r[k]) : (titulo.startsWith("A más") ? "sin cambio" : "—")}</td>`).join("")}</tr>`).join("");
+    return `<div class="ch-tip ch-tip-tab"><div class="tip-h">${titulo}</div><table class="tip-tab">${head}${body}</table></div>`;
+  }
+
   function copyHtml(ch, st) {
-    const { tip, note } = channelCopy(ch, st);
-    return `${tip ? `<p class="ch-tip">${escapeHtml(tip)}</p>` : ""}${note ? `<p class="ch-note">${escapeHtml(note)}</p>` : ""}`;
+    let { tip, note } = channelCopy(ch, st);
+    // El aviso de codeudor viene pegado al de plazos: va en su propio renglón.
+    const all = [tip, note].filter(Boolean).join(" ");
+    const cod = all.match(/Con un codeudor[^]*$/i);
+    if (cod) {
+      tip = tip.replace(cod[0], "").trim();
+      note = note.replace(cod[0], "").trim();
+    }
+    const tabla = tip ? plazosTablaHtml(tip) : (note ? plazosTablaHtml(note) : null);
+    if (tabla && !tip) note = "";
+    const tipHtml = tabla || (tip ? `<p class="ch-tip">${escapeHtml(tip)}</p>` : "");
+    const codHtml = cod ? `<p class="ch-note ch-cod">💡 ${escapeHtml(cod[0].trim())}</p>` : "";
+    return `${tipHtml}${note ? `<p class="ch-note">${escapeHtml(note)}</p>` : ""}${codHtml}`;
   }
 
   function channelHtml(ch, st) {
