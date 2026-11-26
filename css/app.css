@@ -265,3 +265,19 @@ pre.payload{white-space:pre-wrap;word-break:break-word;background:#0f172a;color:
 #prefillNote{margin:0 0 14px}
 .best-pm{color:var(--muted);font-size:12px;font-weight:500;margin-top:2px}
 .best-tip{margin-top:12px;padding:10px 12px;border-radius:10px;background:#fff4f5;border:1px solid #fecdd3;font-size:13px;line-height:1.4}
+/* Mis consultas compacta: en compu, una consulta por renglón */
+.q-list{gap:6px}
+.q-card{padding:10px 12px}
+.q-cli{margin:6px 0 4px}
+@media (min-width: 900px){
+  .q-list{gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .q-card{display:grid;grid-template-columns:170px minmax(0,1fr) 150px 230px 70px;align-items:center;gap:12px;
+          border:0;border-bottom:1px solid var(--border);border-radius:0;padding:8px 14px}
+  .q-card:last-child{border-bottom:0}
+  .q-top,.q-bot{display:contents}
+  .q-ag{grid-column:1;grid-row:1;max-width:100%;justify-self:start}
+  .q-cli{grid-column:2;grid-row:1;margin:0;font-size:14px;font-weight:700}
+  .q-date{grid-column:3;grid-row:1}
+  .q-pills{grid-column:4;grid-row:1;justify-content:flex-end;flex-wrap:nowrap}
+  .q-more{grid-column:5;grid-row:1;text-align:right}
+}

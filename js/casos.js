@@ -348,7 +348,7 @@ const ZharoCasos = (() => {
       dni_tail: c.dni_tail || null,
       source: c.source || "csv",
       origin: "feed",
-      nombre: null,
+      nombre: c.nombre || null,
       dni: null,
       status: null,
       case_state: c.case_state || null,
